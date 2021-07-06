@@ -1,5 +1,5 @@
 ---
-title: "Index"
+title: "SW FL Tidal Creeks Additional Resources"
 author: "Mwessel"
 date: "7/05/2021"
 output: html_document
@@ -9,6 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## SW FL Tidal Creeks Additional Resources
+## Background
 
 
