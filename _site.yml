@@ -4,8 +4,8 @@ navbar:
   left:
     - text: "Home"
       href: index.html
-    - text: "Creek Length"
-      href: Creek Length.html
+    - text: "CreekLength"
+      href: CreekLength.html
 output_dir: "."
 
 
