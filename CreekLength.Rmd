@@ -9,6 +9,4 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Creek Length Adjustment
-
-![](https://tbep-tech.github.io/tidalcreek-stats/CreekLength.pdf)
+## [Analysis Link](https://tbep-tech.github.io/tidalcreek-stats/CreekLength.pdf){target="_blank"}
