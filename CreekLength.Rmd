@@ -9,4 +9,4 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## [Analysis Link](https://tbep-tech.github.io/tidalcreek-stats/CreekLength.pdf){target="_blank"}
+## [Analysis Link](https://tbep-tech.github.io/tidalcreek-stats/docs/CreekLength.pdf){target="_blank"}
