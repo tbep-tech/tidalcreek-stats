@@ -9,6 +9,24 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Background
+# Background
+This page  provides  updates to the SW FL Tidal Creeks Water Quality Assessment Framework (WQAF) using  open science principals in addition to  details on the development of the WQAF that can be conveniently accessed in one place. The page also includes information on potential future directions for research and management of these systems. This page will be updated as new features are incorporated in the framework.
+
+
+## IWR Run61 Updates
+
+IWR Run 61 became available in June 2021 and is now being incorporated into the WQAF. Each run produces a new WBID and Station list which must be intersected with the creek line file to obtain the dataset from which the WQAF analysis is conducted.  An interactive map of the Run 61 data used in the WQAF is provided below.   
+
+```{r run61, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+
+
+
+```
+
+
+
+
 
 

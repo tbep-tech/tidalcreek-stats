@@ -1,0 +1,34 @@
+---
+title: "Additional Resources"
+author: "Mwessel"
+date: "7/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Background
+This page provides additional information on details used in construction of the WQAF as well as summaries of various aspects of analysis conducted to identify management tools related to evaluating tidal creek condition. THese links will be updates as additional analysis is conducted and additional features are added to the dashboard. 
+
+
+
+### [Creek Length Adjustment](https://tbep-tech.github.io/tidalcreek-stats/docs/CreekLength.pdf){target="_blank"}
+This link details the assessment of creek length as a metric to develop the Caution level criteria. This is an area of current research. The original regression relationship was statistically significant and was supported by other analysis suggesting that creek length was a contributing factor explaining variation in nutrient concentrations in these creeks.However, the relationships were somewhat weak. Over time, stakeholders should continue to evaluate the utility of the creek length adjustment relative to simply using the TN indicator threshold value of 1.1 mg/l annual geometric mean as a threshold for the Caution level. Assessing these results over time and comparing the relative accuracy of these metrics against other indicators will improve the reliability of the Caution level for defining creeks that may be trending towards an undesirable condition.    
+
+
+### [Monte Carlo Assessment](https://tbep-tech.github.io/tidalcreek-stats/docs/MCMC.pdf){target="_blank"}
+This link provides code to replicate the monte carlo analysis used to identify the "Investigate " criteria for the WQAF. THe code is written in Statistical Analysis Systems (SAS) but should be easily transferable to R software though results may differ slightly due to differences in the random seed algorithms. The results defined by this analysis are those currently used in the dashboard and as reported in Wessel et al. 2021 which differ slightly from that initially reported in Janicki and Mote (2016 and 2019) as the computer coding methods were refined over time.    
+
+
+### Dissolved Oxygen Assesment
+
+
+
+### Dillution Along the Salinity Gradient
+
+
+
+### The Case for Urbanization Reducing Productivity
