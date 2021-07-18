@@ -7,5 +7,5 @@ navbar:
     - text: "Additional Resources"
       href: Additional-Resources.html
 output_dir: "."
-
+css: styles.css
 
