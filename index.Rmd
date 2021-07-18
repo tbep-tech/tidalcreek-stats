@@ -1,5 +1,5 @@
 ---
-title: "SW FL Tidal Creeks Additional Resources"
+title: "SW FL Tidal Creeks Updates"
 author: "Mwessel"
 date: "7/05/2021"
 output: html_document
@@ -7,20 +7,39 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(sf)
+library(plotly)
 ```
 
 # Background
-This page  provides  updates to the SW FL Tidal Creeks Water Quality Assessment Framework (WQAF) using  open science principals in addition to  details on the development of the WQAF that can be conveniently accessed in one place. The page also includes information on potential future directions for research and management of these systems. This page will be updated as new features are incorporated in the framework.
+This page is established to provide information on updates to the SW FL Tidal Creeks Water Quality Assessment Framework (WQAF) in addition to details on the development of the WQAF and directions for future research that can be conveniently accessed in one place (Additional Resources tab). This page will be continually updated using open science principals as new analysis is conducted and new features are incorporated in the WQAF.
 
 
 ## IWR Run61 Updates
 
-IWR Run 61 became available in June 2021 and is now being incorporated into the WQAF. Each run produces a new WBID and Station list which must be intersected with the creek line file to obtain the dataset from which the WQAF analysis is conducted.  An interactive map of the Run 61 data used in the WQAF is provided below.   
+The Florida department of Environmental Protection IWR Run 61 water quality database became available in June 2021 and is now incorporated into the WQAF. Each IWR run produces a new WBID and Station list which must be intersected with the creek line file to obtain the dataset from which the WQAF analysis is conducted.  An interactive map of the Run 61 data used in the current WQAF dashboard is provided below.   
 
 ```{r run61, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+setwd("C:/Wessel/Git_projects/TCstats/Creek_selectR")
+
+IWR_wbid <- sf::read_sf(dsn = ".", layer = "WBID_Run61")
+IWR_sta  <- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_StatIWR61_Clean") 
+Creek_jei<- sf::read_sf(dsn = ".", layer = "TidalCreek_All_Line") 
+Creek_buff<- sf::read_sf(dsn = ".", layer = "TidalCreek_All_Line_Buff200m")
+
+IWR_sta <- st_transform(IWR_sta, crs = 26917)
+st_crs(IWR_sta) 
 
 
+p1 <- ggplotly(ggplot() +
+    geom_sf(data = Creek_jei, fill = "lemonchiffon", size = 0.6) +
+        geom_sf(data = IWR_sta, size = 0.40, color = "blue") +
+        # can include WBID but this is the whole state so would need to clip to box first?
+  #  coord_sf(xlim = c(-82.9, -81.0), ylim = c(26.00, 28.50), expand = TRUE) +
+    theme_classic())
+p1     
 
 
 ```

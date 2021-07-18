@@ -1,0 +1,168 @@
+---
+title: "Creek SelectR"
+author: "Mwessel"
+date: "7/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+rm(list = ls())
+
+# marcus says install install.version(sf,.98) but i havent yet.
+library(sf)
+library(tidyverse)
+library(haven)
+library(leaflet)
+library(readxl)
+library(plotly)
+library(dplyr)
+```
+
+# Workflow to Update Tidal Creeks to Run61
+This describes an initial attempt to update the dashboard with IWR run61 data. Because some wbids include multiple creeks and some creeks include multiple wbids it is not possible to just subset the iwr dataset based on a static wbid file and run the TC functions. Instead stations (STA) must be assigned to a creek identifier (JEI) and WBID within the creek line file using a 200 meter buffer. An additional complicating factor is that FDEP changes WBID names routinely which means that the IWR run WBID and Station shapefiles associated with each run should be used to intersect the creek population and then the data should be subset in that manner. The following workflow is being pursued using as much R code as possible.
+
+
+## Step 1 Read in Full IWR dataset which was exported from the FDEP SAS database as a txt file reduced to only needed params. -  This works on 16gb RAM computer with reduced params
+```{r readin}
+setwd("~/data/")
+
+library(data.table)
+
+yearin<-2010
+
+# Full reduced just means its the full dataset reduced to only the necessary variables for the creeks run
+#tmp <- fread('E:/run61/iwrrun61_full_reduced.txt', sep = '\t')
+
+# the param selection here is really already done but i left the code
+#full_iwr <- tmp%>%dplyr::filter(year >= yearin)%>%dplyr::select('wbid', 'class', 'sta', 'year', 'month', 'day', 'time', 'depth', 'depth2', 'param', 'masterCode', 'result','rCode', 'newComment' )
+
+#rm(list = 'tmp')
+
+#save(full_iwr, file = 'full_iwr61.RData', compress = 'xz')
+
+load("C:/Wessel/Git_projects/TCstats/data/full_iwr61.rdata")
+
+
+```
+
+
+## Step 2 Read in creek line file and the run 61 WBID and Station shapefiles to intersect .
+in this case Steve West already intersected the line file with WBIDs which uses a 200meter buffer to identify stations.
+The code is set up below to identify the IWR shapes necessary to do this intersect.
+FDEP can and will change wbid boundaries and wbid names so this probably needs to be done each time the dashboard is updated.
+
+
+```{r}
+setwd("C:/Wessel/Git_projects/TCstats/Creek_selectR")
+
+
+# Full IWR Run61 WBID  and station files that would be used for future updates
+IWR_WBID<- sf::read_sf(dsn = ".", layer = "WBID_Run61")
+IWR_STA <- sf::read_sf(dsn = ".", layer = "IWR_Stations_Run61") # all stations ever!
+
+# This is the line file with line broken by WBID  - in the future we may need to use just the line file (TidalCreek_ALL_Line) and then segment it because WBID boundaries do change.
+
+Creek_jei <- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_WBID61")
+```
+
+# Step 3 Workflow to do GIS work in R :
+   1) intersect creek_jei and IWR_WBID
+   2) create 200m buffer around Creek_JEI
+   3) overlay IWR_STA and select those stations which fell within the 200m buffer
+
+The results of this should look like the shapefiles listed below
+
+
+```{r}
+
+# Created shapes
+Creek_sta  <- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_StatIWR61_Clean")
+Creek_buff <- sf::read_sf(dsn = ".", layer = "TidalCreek_All_Line_Buff200m")
+
+# Final joined shape
+Creek_select<- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_StatIWR61_Join")
+
+
+```
+
+## Step 4 - First, map individual shapes already generated to check things out
+ Plot the overlay of the points and line files
+
+```{r}
+
+# Transform all shapes to UTM CRS such as 26917 which seems like maybe the way to go to do these intersects
+
+Creek_sta <- st_transform(Creek_sta, crs = 26917)
+st_crs(Creek_sta)
+
+Creek_jei <- st_transform(Creek_jei, crs = 26917)
+st_crs(Creek_jei)
+
+Creek_wbid <- st_transform(Creek_wbid, crs = 26917)
+st_crs(Creek_wbid)
+
+st_crs(Creek_buff)
+
+p1 <- ggplotly(ggplot() +
+       geom_sf(data = Creek_buff,  fill = "gray") +
+       geom_sf(data = Creek_jei,  size = 0.6) +
+       geom_sf(data = Creek_sta, size = 0.40, color = "blue") +   # This is all stations ever, not last 10 years!
+      theme_classic())
+p1
+
+# trying to plot joined file but this doesn't look right when plotted using ggplot
+p2 <- ggplotly(ggplot() +
+       geom_sf(data = Creek_select) +
+            theme_classic())
+p2
+
+```
+
+
+#Step 5 - Back to the individual IWR files needed to do the GIS work in R
+intersect the line file and the WBID file to assign wbids to jei (creek identifier). Then create a 200meter buffer and assign IWR_sta (sta) to 'jei'. Maybe creating the buffer first is the way to go....
+
+ i havent been able to get this to work.
+
+
+```{r}
+
+IWR_STA <- st_transform(IWR_STA, crs = 26917)%>%
+  dplyr::select(STATION_ID, geometry)
+st_crs(IWR_STA)
+
+creek_int <- st_intersection(IWR_STA, Creek_jei)
+#Warning: attribute variables are assumed to be spatially constant throughout all geometries
+
+
+# Other attempts from internet code i couldnt get to work
+##################################################################
+reach.nearest <- st_nearest_feature(IWR_STA, Creek_jei)
+creek.buffer <- st_set_precision(Creek_jei, precision=.02)
+reach.nearest <- creek.buffer[reach.nearest,]
+
+## Locate nearest point along nearest reach (Returns line)
+  pt.nearest <- st_nearest_points(pt, reach.nearest)
+  pt.nearest <- st_cast(pt.nearest, "POINT")[2]
+#################################################################
+
+
+# The result should look like the shapefile read in below.
+
+# Final joined shape
+Creek_select
+
+```
+
+##  Once the steps above are accomplished then we would  merge IWR datset and the shapefile to pull the data
+Now we have the ful IWR dataset and the selected stations along with their wbid and jei assignments so we can arrange the two by the station variable (STA) and select only those stations within the buffer.
+
+```{r}
+selected<-left_join(Creek_select,full_iwr,by='sta')
+```
+
+
+

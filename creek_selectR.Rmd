@@ -1,0 +1,348 @@
+---
+title: "Creek SelectR"
+author: "Mwessel"
+date: "7/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+rm(list = ls())  
+
+# marcus says install install.version(sf,.98) but i havent yet. 
+library(sf) 
+library(tidyverse)
+library(haven)
+library(leaflet)
+library(readxl)
+library(plotly)
+library(dplyr)
+library(dplyr)
+```
+
+# Workflow to Update Tidal Creeks to Run61
+This describes an initial attempt to update the dashboard with IWR run61 data. Because some wbids include multiple creeks and some creeks include multiple wbids it is not possible to just subset the iwr dataset based on a static wbid file and run the TC functions. Instead stations (STA) must be assigned to a creek identifier (JEI) and WBID within the creek line file using a 200 meter buffer. An additional complicating factor is that FDEP changes WBID names routinely which means that the IWR run WBID and Station shapefiles associated with each run should be used to intersect the creek population and then the data should be subset in that manner. The following workflow is being pursued using as much R code as possible. 
+
+
+## Step 1 Read in Full IWR dataset which was exported from the FDEP SAS database as a txt file reduced to only needed params. -  This works on 16gb RAM computer with reduced params
+```{r readin}
+setwd("~/data/")
+
+library(data.table)
+
+yearin<-2010
+
+# Full reduced just means its the full dataset reduced to only the necessary variables for the creeks run 
+#tmp <- fread('E:/run61/iwrrun61_full_reduced.txt', sep = '\t')
+
+# the param selection here is really already done but i left the code
+#full_iwr <- tmp%>%dplyr::filter(year >= yearin)%>%dplyr::select('wbid', 'class', 'sta', 'year', 'month', 'day', 'time', 'depth', 'depth2', 'param', 'masterCode', 'result','rCode', 'newComment' )
+
+#rm(list = 'tmp')
+
+#save(full_iwr, file = 'full_iwr61.RData', compress = 'xz')
+
+load("C:/Wessel/Git_projects/TCstats/data/full_iwr61.rdata")
+
+test<-full_iwr%>%
+tidyr::unite('date', month, day, year, remove = F, sep = '-') %>%  
+dplyr::mutate(
+      masterCode = dplyr::case_when(
+        masterCode %in% c('NO3O2') ~ 'NO23',
+        T ~ masterCode
+      ),
+
+          # Remove FDEP Qualifiers  mdl left at mdl
+  disqual = dplyr::case_when(
+          grepl('[VFNOYHJKQ?]', rCode) ~ 1),
+  disqual2 = dplyr::case_when(
+          grepl('[VFNOYHJKQ?]', newComment) ~ 1))%>%
+dplyr::filter(is.na(disqual) & is.na(disqual2),
+    result > 0)%>%
+   mutate( result = log(result),
+           date = as.Date(date, format = '%m-%d-%Y')
+    )
+
+
+```
+
+
+## Step 2 Read in creek line file and the run 61 WBID and Station shapefiles to intersect .
+in this case Steve West already intersected the line file with WBIDs which uses a 200meter buffer to identify stations. The code is set up below to identify the IWR shapes necessary to do this intersect. FDEP can and will change wbid boundaries and wbid names so this probably needs to be done each time the dashboard is updated.
+
+
+```{r}
+setwd("C:/Wessel/Git_projects/TCstats/Creek_selectR")
+
+# Creek line file with line broken by WBID
+Creek_jei <- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_WBID61")
+
+# Full IWR Run61 WBID  and station files that would be used for future updates
+IWR_WBID<- sf::read_sf(dsn = ".", layer = "WBID_Run61") 
+IWR_STA <- sf::read_sf(dsn = ".", layer = "IWR_Stations_Run61") # all stations ever!
+
+
+## here we would:
+  # 1) intersect creek_jei and IWR_WBID
+  # 2) create 200m buffer around Creek_JEI
+  # 3) overlay IWR_STA and select those stations which fell within the 200m buffer
+  
+
+# The results should look like below
+
+Creek_sta  <- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_StatIWR61_Clean") 
+Creek_buff <- sf::read_sf(dsn = ".", layer = "TidalCreek_All_Line_Buff200m")
+
+# Final joined shape
+Creek_select<- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_StatIWR61_Join")
+
+```
+
+## Step 3 - map
+ Plot the overlay of the points and line files
+
+```{r}
+Creek_sta <- st_transform(Creek_sta, crs = 26917)
+st_crs(Creek_sta) 
+
+Creek_jei <- st_transform(Creek_jei, crs = 26917)
+st_crs(Creek_jei) 
+
+Creek_wbid <- st_transform(Creek_wbid, crs = 26917)
+st_crs(Creek_wbid) 
+
+st_crs(Creek_buff) 
+
+p1 <- ggplotly(ggplot() +
+       geom_sf(data = Creek_buff,  fill = "gray") +              
+       geom_sf(data = Creek_jei,  size = 0.6) +
+       geom_sf(data = Creek_sta, size = 0.40, color = "blue") +   # all stations ever!
+      theme_classic())
+p1   
+
+# trying to plot joined file but this doesn't look right when plotted using ggplot
+p2 <- ggplotly(ggplot() +
+       geom_sf(data = Creek_select) +              
+            theme_classic())
+p2
+
+```
+
+
+#Step 4 - Now intersect the line file and the WBID file to assign wbids to jei (creek identifier). Then create a 200meter buffer and assign IWR_sta (sta) to 'jei'.  For now we have done this assignment using the run61 WBID and station shapes along with the Creek_jei line file using GIS
+ 
+```{r}
+IWR_STA <- st_transform(IWR_STA, crs = 26917)%>%
+  dplyr::select(STATION_ID, geometry)
+st_crs(IWR_STA) 
+
+creek_int <- st_intersection(IWR_STA, Creek_jei)
+#Warning: attribute variables are assumed to be spatially constant throughout all geometries
+
+
+# other attempts from internet code i couldnt get to work
+##################################################################
+reach.nearest <- st_nearest_feature(IWR_STA, Creek_jei)
+creek.buffer <- st_set_precision(Creek_jei, precision=.02)
+reach.nearest <- creek.buffer[reach.nearest,]
+  
+## Locate nearest point along nearest reach (Returns line)
+  pt.nearest <- st_nearest_points(pt, reach.nearest)
+  pt.nearest <- st_cast(pt.nearest, "POINT")[2]
+#################################################################
+
+
+# The result should look like the shapefile read in below.
+
+# Final joined shape
+Creek_select
+
+```
+
+
+
+## Step 4
+Now we have the ful IWR dataset and the selected stations along with their wbid and jei assignments so we can arrange the two by the station variable (STA) and select only those stations within the buffer. 
+```{r}
+selected<-left_join(stat_join_200,full_iwr,by='sta')
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+jei_wbid <- sf::read_sf(dsn = ".", layer = "TidalCreek_All_Line_WBID61") 
+jei_wbid61 <-data.frame(jei_wbid)%>%
+    mutate(run61="Run61")%>%
+   select(WBID,run61)
+```
+
+##check against original creek pop wbid list- Note wbids are duplicated here because some wbids have multiple creeks they go to creek
+```{r}
+creek_pop<-read_sas("creek_pop.sas7bdat")%>%
+   select(WBID)
+``` 
+
+## check wbid pop
+this is clunky but im just trying to get a unique wbid list
+```{r}
+
+joined<-full_join(jei_wbid61,creek_pop,by="WBID")
+joined<-data.frame(unique(joined$WBID))%>%
+  mutate(WBID=unique.joined.WBID.)%>%
+  select(WBID)
+
+write_csv(joined,"run61 wbid list.csv")
+```  
+
+# Join and Select only WBIDS in creek WBID list
+this joins the IWR station list to pull all stations within the WBID list. Because the creek pop line file intersects open bay wbids, several open bay wbids are included which are deleted using the filter argument
+
+```{r}
+
+stat_joined<-left_join(joined,stations,by="WBID")%>%
+   filter(!is.na(LAT))%>%
+  filter(!WBID %in% c("1558B","1558C","1558D","1558E","1558G","2055","1883","1558BZ",
+              "1694B", "1558H","1558I","1618C","1661A","1584B","1536E","1637","1621G","1621A","1693","1742C1","1797B","1797A",
+              "1848A","1848B","1968B","1968C","1968D","1968E","2018A","3235A", "1991A","1991B","1991C","1991E","1991G","2056B","2056C2","2056C1","1623A","1623B",
+              "1983A","1983A1","1983B","2065C","2065D","2065B","2065A","2065F","2065H1","3258I","3258A1","3240A","3240B","3240C" ))  
+
+write_csv (stat_joined,"station selected run61.csv")
+```
+## Check the map to ensure all expected data appear populated
+
+```{r}
+mm<- leaflet(stat_joined)%>%
+  addProviderTiles(providers$OpenStreetMap) %>%
+  addCircles(lng = ~ LONG, lat = ~ LAT, color = "blue", fillColor = "blue", opacity = 0.5, fillOpacity = 0.5, popup=~as.character(WBID),label = ~as.character(WBID)) 
+
+mm 
+
+```
+
+# Line File Interest to assign JEI
+So now we should have all stations we need, now we need to interest with the creek pop line file to assign JEI and WBID to each station. Last time we used a buffer to do this.  
+
+## Make SF object from stat_joined
+creek line file is utm - not sure what the best coordinate system is to use for interesects or if it matters. 
+
+```{r}
+
+popstats_sf<-st_as_sf(stat_joined,coords = c("LONG", "LAT"), crs = 26917) #UTM Transverse mercator
+
+# Read in creeks shapefile
+jei_layer <- sf::read_sf(dsn = ".", layer = "TidalCreek_All_Line_WBID61") %>%
+  mutate(JEI=CreekID)%>%
+  select (WBID, JEI)%>%
+  st_make_valid()
+
+sf::st_crs(jei_layer) #UTM Transverse mercator
+#jei_layer <- st_transform(jei_layer, crs = 4326)
+
+p1 <- ggplot() +
+  geom_sf(data = jei_layer, fill = "lemonchiffon", size = 0.1)
+p1
+```
+
+
+# Test that point data and the line file are in SF package objects
+
+```{r pointSF, message = FALSE, warning = FALSE}
+
+p1 <- ggplot() +
+  
+  geom_sf(data = popstats_sf, size = 0.5, color = "orange") +
+  geom_sf(data = jei_layer, fill = "lemonchiffon", size = 0.1) +
+  # you will need to re-do the limits
+  coord_sf(xlim = c(-82.9, -81.0), ylim = c(26.00, 28.50), expand = TRUE) +
+  theme_classic()
+p1
+
+```
+
+
+# attempt to intersect with buffer
+
+```{r}
+creek.buffer <- st_intersection(popstats_sf, jei_layer)
+
+creek.buffer <- st_set_precision(creek.buffer, precision=100)
+
+reach.nearest <- st_nearest_feature(popstats_sf, jei_layer)
+reach.nearest <- rivers.buffer[reach.nearest,]
+  
+  # # Locate nearest point along nearest reach (Returns line)
+  pt.nearest <- st_nearest_points(pt, reach.nearest)
+  pt.nearest <- st_cast(pt.nearest, "POINT")[2]
+  
+  # Snap point
+  pt.nearest <- st_snap(pt.nearest, reach.nearest, tolerance=1e-09)
+  
+  pt.dt <- data.frame(SiteId = i, 
+                      ReachId = reach.nearest$FID,
+                      Intersects = st_intersects(pt.nearest, reach.nearest, sparse=FALSE)[1,1],
+                      Distance = st_distance(pt.nearest, reach.nearest),
+                      X = st_coordinates(pt.nearest)[1],
+                      Y = st_coordinates(pt.nearest)[2]
+  )
+})
+
+result <- do.call(rbind, pts.near)
+
+```
+
+
+
+
+
+
+
+                                                                                                                                          ```             
+
+
+pts <- st_read("./inputs", "sites", stringsAsFactors = F)
+rivers <- st_read("./inputs", "rivers_buffers", stringsAsFactors = F)
+
+pts.near <- lapply(pts$SiteId, function(i){
+  # Select site, site buffer, and reaches within the site buffer
+  pt <- filter(pts, SiteId==i) # get individual site
+  pt.buffer <- filter(pt.buffers, SiteId==i)
+  
+ 
+  
+  # # Set precision
+  # p <- 1000
+  # pt <- st_set_precision(pt, precision=p)
+  # rivers.buffer <- st_set_precision(rivers.buffer, precision=p)
+  
+  # Select nearest reach
+  reach.nearest <- st_nearest_feature(pt, rivers.buffer)
+  reach.nearest <- rivers.buffer[reach.nearest,]
+  
+  # # Locate nearest point along nearest reach (Returns line)
+  pt.nearest <- st_nearest_points(pt, reach.nearest)
+  pt.nearest <- st_cast(pt.nearest, "POINT")[2]
+  
+  # Snap point
+  pt.nearest <- st_snap(pt.nearest, reach.nearest, tolerance=1e-09)
+  
+  pt.dt <- data.frame(SiteId = i, 
+                      ReachId = reach.nearest$FID,
+                      Intersects = st_intersects(pt.nearest, reach.nearest, sparse=FALSE)[1,1],
+                      Distance = st_distance(pt.nearest, reach.nearest),
+                      X = st_coordinates(pt.nearest)[1],
+                      Y = st_coordinates(pt.nearest)[2]
+  )
+})
+
+result <- do.call(rbind, pts.near)
