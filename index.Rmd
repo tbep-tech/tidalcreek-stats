@@ -18,18 +18,23 @@ library(here)
 ```
 
 # Background
-This page is established to provide information on updates to the SW FL Tidal Creeks Water Quality Assessment Framework (WQAF) in addition to details on the development of the WQAF and directions for future research that can be conveniently accessed in one place (Additional Resources tab). This page will be continually updated using open science principals as new analysis is conducted and new features are incorporated in the WQAF.
+This page is established to provide information on updates to the SW FL Tidal Creeks dashboard [dashboard](https://shiny.tbep.org/tidalcreek-dash/?_ga=2.9967863.311877574.1624202665-1007913767.1624202665#section-overview){target="_blank"} as well as areas of current research and future direction (see additional resources tab), conveniently accessed in one location. This page will be continually updated using open science principals as new analyses are conducted and new features are incorporated into the dashboard.
 
+### 7/19/21
+### IWR Run61 Updates
 
-## IWR Run61 Updates
+The Florida department of Environmental Protection IWR Run 61 water quality database became available on May 27 2021 and this run has now been integreated into the dashboard. Each IWR run produces a new WBID and Station list which must be intersected with the creek line file to obtain the dataset from which the WQAF analysis is conducted. As with the last iteration, the intersection of WBID boundaries in combination with the creek line file and 200 meter buffer can sometimes result in sites in more open estuary locations being assigned to a creek. An example in the figure below shows a site in Billy Creek that lands in the more open system WBID 3240B instead of the creek WBID 3240J(1-4). Given the large population of creeks, this outcome is accepted if the STA lies within the buffer and the report card outcomes are now reported by JEI and WBID with the polyline file segmented by WBID to allow for representation of all occurrences for further evaluation. 
 
-The Florida department of Environmental Protection IWR Run 61 water quality database became available in June 2021 and is now incorporated into the WQAF. Each IWR run produces a new WBID and Station list which must be intersected with the creek line file to obtain the dataset from which the WQAF analysis is conducted.  An interactive map of the Run 61 data used in the current WQAF dashboard is provided below.   
+```{r, echo = F, out.width = '65%', fig.align = 'center'}
+knitr::include_graphics('BillyCreek.PNG')
+```
 
+An interactive map of the Run 61 data used for the current dashboard application is provided below which can be used to highlight either the creek identifier (JEI), the WBID, or any water quality stations that fell within the 200meter buffer of the creek polyline (STA) by hovering over the area of interest. This exploratory tool is a new feature to aid in understanding what data were used in the dashboard evaluation
 
 ````{r, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-setwd("C:/Wessel/Git_projects/TCstats/data")
-
+#setwd("C:/Wessel/Git_projects/TCstats/data")
+setwd(here("./data"))
 #get unique wbid list to pull out from full IWR wbid shape
 creek_pop61<-read_sas("creek_pop61.sas7bdat")
 
@@ -52,9 +57,10 @@ stas<-unique(selected_sta$sta)
 ```
 
 
-```{r run61, include=FALSE}
+```{r run61 }
 knitr::opts_chunk$set(echo = FALSE)
-setwd("C:/Wessel/Git_projects/TCstats/Creek_selectR")
+#setwd("C:/Wessel/Git_projects/TCstats/Creek_selectR")
+setwd(here("./Creek_selectR"))
 
 IWR_wbid <- sf::read_sf(dsn = ".", layer = "WBID_Run61")
 IWR_sta  <- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_StatIWR61_Clean")%>%
@@ -83,7 +89,7 @@ Creek_jei <- st_transform(Creek_jei, crs = 4326)
 leaflet::leaflet() %>% 
   leaflet::addProviderTiles(providers$CartoDB.Voyager) %>% 
   leaflet::addPolygons(color = "#222", weight = 2, opacity = 1, fillOpacity = 0,label = ~lapply(WBID, htmltools::htmlEscape), data = Creek_list ) %>% 
-  leaflet::addCircles(label = ~lapply(sta, htmltools::htmlEscape),data = Creek_stas)%>%
+  leaflet::addCircles(color = "red", label = ~lapply(sta, htmltools::htmlEscape),data = Creek_stas)%>%
    leaflet::addPolylines(label = ~lapply(CreekID, htmltools::htmlEscape),data = Creek_jei)
 
 ```
