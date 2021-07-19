@@ -3,13 +3,18 @@ title: "SW FL Tidal Creeks Updates"
 author: "Mwessel"
 date: "7/05/2021"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(sf)
+library(haven)
 library(plotly)
+library(leaflet)
+library(here)
 ```
 
 # Background
@@ -20,27 +25,66 @@ This page is established to provide information on updates to the SW FL Tidal Cr
 
 The Florida department of Environmental Protection IWR Run 61 water quality database became available in June 2021 and is now incorporated into the WQAF. Each IWR run produces a new WBID and Station list which must be intersected with the creek line file to obtain the dataset from which the WQAF analysis is conducted.  An interactive map of the Run 61 data used in the current WQAF dashboard is provided below.   
 
+
+````{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+setwd("C:/Wessel/Git_projects/TCstats/data")
+
+#get unique wbid list to pull out from full IWR wbid shape
+creek_pop61<-read_sas("creek_pop61.sas7bdat")
+
+# creates a list that can be used with an %in% statement
+wbids<-unique(creek_pop61$WBID)
+
+# make a list of stations with data from last 10 years. This was done in the creek_selectR.rmd file using the following code
+#yearin<-2010
+#selected<-left_join(Creek_select,full_iwr,by='sta')%>%
+#   filter(year > yearin &year !=2021)
+#selected_sta<-tibble(unique(selected$sta))%>%
+#   mutate(sta=unique(selected$sta))%>%
+#   select(sta)
+#save(selected_sta, file = 'C:/Wessel/Git_projects/TCstats/data/selected_sta.RData')
+
+# just load the selected file for now.
+load("C:/Wessel/Git_projects/TCstats/data/selected_sta.rdata")
+stas<-unique(selected_sta$sta)
+
+```
+
+
 ```{r run61, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 setwd("C:/Wessel/Git_projects/TCstats/Creek_selectR")
 
 IWR_wbid <- sf::read_sf(dsn = ".", layer = "WBID_Run61")
-IWR_sta  <- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_StatIWR61_Clean") 
+IWR_sta  <- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_StatIWR61_Clean")%>%
+  mutate(sta=STATION_ID) 
 Creek_jei<- sf::read_sf(dsn = ".", layer = "TidalCreek_All_Line") 
 Creek_buff<- sf::read_sf(dsn = ".", layer = "TidalCreek_All_Line_Buff200m")
 
 IWR_sta <- st_transform(IWR_sta, crs = 26917)
-st_crs(IWR_sta) 
 
+Creek_list<-IWR_wbid%>%filter(WBID %in% (wbids))
+Creek_stas<-IWR_sta%>%filter(sta %in% (stas))
 
-p1 <- ggplotly(ggplot() +
-    geom_sf(data = Creek_jei, fill = "lemonchiffon", size = 0.6) +
-        geom_sf(data = IWR_sta, size = 0.40, color = "blue") +
-        # can include WBID but this is the whole state so would need to clip to box first?
-  #  coord_sf(xlim = c(-82.9, -81.0), ylim = c(26.00, 28.50), expand = TRUE) +
-    theme_classic())
-p1     
+# cant make this interactive but figured out how to do it with Leaflet
+#p1 <- ggplot() +
+#    geom_sf(data = Creek_jei, fill = "lemonchiffon", size = 0.6) +
+  #      geom_sf(data = IWR_sta, size = 0.40, color = "blue") +
+  #      geom_sf(data = Creek_WB, size = 0.40, color = "blue") +
+#    geom_sf(data = Creek_list, size = 0.40, color = "red",fill=NA)+
+#    theme_classic()
+#ggplotly(p1)     
 
+Creek_stas <- st_transform(Creek_stas, crs = 4326)
+Creek_list <- st_transform(Creek_list, crs = 4326)
+Creek_jei <- st_transform(Creek_jei, crs = 4326)
+
+leaflet::leaflet() %>% 
+  leaflet::addProviderTiles(providers$CartoDB.Voyager) %>% 
+  leaflet::addPolygons(color = "#222", weight = 2, opacity = 1, fillOpacity = 0,label = ~lapply(WBID, htmltools::htmlEscape), data = Creek_list ) %>% 
+  leaflet::addCircles(label = ~lapply(sta, htmltools::htmlEscape),data = Creek_stas)%>%
+   leaflet::addPolylines(label = ~lapply(CreekID, htmltools::htmlEscape),data = Creek_jei)
 
 ```
 
