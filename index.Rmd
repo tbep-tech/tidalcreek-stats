@@ -34,7 +34,7 @@ An interactive map of the Run 61 data used for the current dashboard application
 ````{r, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
-setwd(here("./data"))
+setwd(here::here("./data"))
 
 #get unique wbid list to pull out from full IWR wbid shape
 creek_pop61<-read_sas("creek_pop61.sas7bdat")
@@ -42,8 +42,8 @@ creek_pop61<-read_sas("creek_pop61.sas7bdat")
 # creates a list that can be used with an %in% statement to pull wbids from iwr wbid list
 wbids<-unique(creek_pop61$WBID)
 
-# Load the selected stastions file from creek_selectR_GIS.rmd.
-load(here("./data/selected_sta.RData"))
+# Load the selected stations file from creek_selectR_GIS.rmd.
+load(here::here("./data/selected_sta.RData"))
 stas<-unique(selected_sta$sta)
 
 ```
@@ -51,8 +51,8 @@ stas<-unique(selected_sta$sta)
 
 ```{r run61 }
 knitr::opts_chunk$set(echo = FALSE)
-#setwd("C:/Wessel/Git_projects/TCstats/Creek_selectR")
-setwd(here("./flatbuff"))
+
+setwd(here::here("./shapes"))
 
 Creek_jei<- sf::read_sf(dsn = ".", layer = "TidalCreek_All_Line_WBID61") 
 #Creek_buff<- sf::read_sf(dsn = ".", layer = "TidalCreek_All_Line_Buff200m")
@@ -63,7 +63,7 @@ IWR_wbid <- sf::read_sf(dsn = ".", layer = "WBID_Run61")
 Creek_list<-IWR_wbid%>%filter(WBID %in% (wbids))
 
 
-IWR_sta  <- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_StatIWR61_join")%>%
+IWR_sta  <- sf::read_sf(dsn = ".", layer = "TidalCreek_ALL_Line_StatWBID61_join")%>%
   mutate(sta=STATION_ID)%>%
   select(sta, geometry)
 
