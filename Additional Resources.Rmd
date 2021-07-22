@@ -32,5 +32,5 @@ This pdf is an excerpt from the 2019 tidal creek study that describes an evaluat
 
 
 ### [Advancing Tidal Creeks Research](https://tbep-tech.github.io/tidalcreek-stats/docs/Future.pdf){target="_blank"}
-This excerpt is from the 2016 describing areas to advance future tidal creek research including the need for additional methods to characterize the role of benthic algal productivity, the role of emergent wetland vegetation, and the case for urbanization resulting in decreased productivity in these creeks.Hopefully, the dashboard tool and water quality assessment framework provide a foundation from which to better understand the role of physical and biological interactions with observed water quality in these systems.  
+This excerpt is from the 2016 report describing areas to advance future tidal creek research including the need for additional methods to characterize the role of benthic algal productivity, the role of emergent wetland vegetation, and the case for urbanization resulting in decreased productivity in these creeks.Hopefully, the dashboard tool and water quality assessment framework provide a foundation from which to better understand the role of physical and biological interactions with observed water quality in these systems.  
 
