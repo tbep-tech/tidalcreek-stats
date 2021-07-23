@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 # Background
-This page provides additional information on details used in construction of the WQAF as well as summaries of various aspects of analysis conducted to identify management tools related to evaluating tidal creek condition. These links will be updates as additional analysis is conducted and additional features are added to the dashboard. 
+This page provides additional information on details used in construction of the tidal creeks dashboard as well as summaries of various aspects of analysis conducted to identify management tools related to evaluating tidal creek condition. These links will be updates as additional analysis is conducted and additional features are added to the dashboard. 
 
 
 
