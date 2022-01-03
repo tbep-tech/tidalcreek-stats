@@ -1,0 +1,180 @@
+---
+title: "Creek Select for tbeptools"
+author: "M. W. Beck"
+date:  "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, warnings = F, message = F}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+
+library(sf)
+library(RODBC)
+library(dplyr)
+```
+
+This workflow was developed as a test case for updating data used to estimate tidal creek assessment cateogires using FLDEP IWR run data.  In this example, we use IWR Run 61, but in theory it should work with any IWR run. The only requirements are:
+
+* Install the R package dependencies above 
+* Download/extract the `.accdb` files for a selected run from here: <https://publicfiles.dep.state.fl.us/dear/iwr/>
+* Have access to the source tidal creek line file with creek ID (JEI) assignments created by MW.
+* A WBID polygon shapefile for the appropriate run, which can be retrieved through web services.
+
+Below we set a path to the extracted location for the IWR database, load the tidal creek line file, and load the wbid polygone fil.
+
+```{r}
+# set database path
+pth <- "~/Desktop/iwr2021_run61_2021-05-27/"
+
+# # to explore
+# con <- odbcConnectAccess2007('C:/Users/mbeck/Desktop/iwr2021_run61_2021-05-27/iwr_run61_05272021.accdb')
+# sqlTables(con)
+# sqlFetch(con, 'station list')
+
+# source creek line file
+tdlcrk <- st_read('shapes/TidalCreek_ALL_Line.shp', quiet = T)
+
+# wbid data, run 61 
+wbid <- st_read('https://opendata.arcgis.com/datasets/d3bb23dc9507422a86c95eb5efc964c9_0.geojson', quiet = T) %>% 
+  st_transform(crs = st_crs(tdlcrk))
+```
+
+Now we import the IWR run data for the entire state using an ODBC connection to the extracted folder.  The following code just iterates through the approac `.accdb` files in the extrated folders, retrieves the data within a ten year window from the current run, and pulls out parameters of interest.  This is done in a loop using a SQL. It only takes a few minutes to run and does not eat up a lot of memory.
+
+```{r}
+# this retrieves most recent ten years of iwr data (excluding incomplete current year)
+# filters only parameters in mcode below
+# used ODBC connect to access file
+# entire state
+
+# .accdb files to query
+dbs <- list.files(pth, pattern = 'rawDataDB.*\\.accdb$', full.names = T)
+
+# the current year of interest, used to build the query for ten prior years
+curyr <- gsub('^.*\\_', '', pth) %>% 
+  as.Date %>% 
+  strftime('%Y') %>% 
+  as.numeric
+
+# query building tools
+mcode <- c("CHLAC","COLOR","COND","DO","DOSAT","NO3O2","ORGN","SALIN","TKN","TN","TP","TSS","TURB") %>% 
+  paste0("masterCode = '", ., "'") %>% 
+  paste0(., collapse = ' or ')
+qry_fun <- function(tab, curyr){
+  
+  out <- paste0("select sta, year, month, day, masterCode, result, rCode from ", tab, " where year > ", curyr - 11, 
+                " and year < ", curyr, 
+               " and (", mcode, ")"
+               )
+  return(out)
+  
+}
+
+# loop through the accdb files
+iwr <- NULL
+for(db in dbs){
+  
+  cat(basename(db), '\n')
+  
+  # setup the connection
+  con <- odbcConnectAccess2007(db)
+  
+  # build the query
+  qry <- basename(db) %>% 
+    gsub('DB|\\.accdb', '', .) %>% 
+    qry_fun(curyr)
+  
+  # retrieve the data
+  res <- sqlQuery(con, qry)
+  
+  # add it to the output
+  iwr <- rbind(iwr, res)
+  
+}
+
+head(iwr)
+```
+
+Now we need to get station lat/lon data for intersection with the tidal creek line layer.  This is for the entire state and is retrieved from an ODBC connection to the extracted folder.
+
+```{r}
+# # from geojson for run61, as an alternative
+# stas <- st_read('https://opendata.arcgis.com/datasets/03dd8da6f071416bafea23d5bcb41c78_1.geojson', quiet = T)
+
+stas <- list.files(pth, pattern = '^iwr\\_run', full.names = T) %>% 
+  odbcConnectAccess2007 %>% 
+  sqlFetch('station list') %>% 
+  filter(STA %in% unique(iwr$sta)) %>% 
+  st_as_sf(coords = c('LONG', 'LAT'), crs = 4326) %>% 
+  st_transform(crs = st_crs(tdlcrk))
+
+head(stas)
+```
+
+The next step is to create a polyline file that is similar to the source file, but includes an intersection with the WBID layer.  It also includes creek ID (JEI), class, and creek length (total across WBIDs).  It is specific to southwest Florida.  This reproduces the `tidalcreeks` sf data object in tbeptools for the current wBID.
+
+```{r}
+# create tidalcreeks polyline file with wbid, class, jei info -------------
+
+# intersect creek lines with wbids
+tidalcreeks <- st_intersection(tdlcrk, wbid) %>% 
+  st_transform(4326) %>% 
+  arrange(CreekID) %>% 
+  mutate(
+    id = 1:nrow(.)
+  ) %>% 
+  select(id, name = Name, JEI = CreekID, wbid = WBID, class = CLASS, Creek_Length_m = Total_m)
+
+# fix rownames
+row.names(tidalcreeks) <- 1:nrow(tidalcreeks)
+
+head(tidalcreeks)
+```
+
+The final step is to extract the IWR station data at the state level to tidal creeks in southwest Florida.  This is done by buffering the original creek line file (200m, flat ends), intersecting the buffered file with the station lat/lon file, and uisng an inner join by station.  Finally, the WBID class is added.  This is reproducing the `iwrraw` file from the tbeptools package.
+
+```{r}
+# wbid classes from wbid, to join
+classadd <- wbid %>% 
+  select(wbid = WBID, class= CLASS) %>% 
+  st_set_geometry(NULL) %>% 
+  unique
+
+# assigns stations to creek id basedon buffer, wbid already in dataset
+# pull station data with the intersect, add class column
+iwrraw <- st_buffer(tdlcrk, dist = 200, endCapStyle = 'FLAT') %>% 
+  st_intersection(stas, .) %>% 
+  select(sta = STA, wbid = WBID, JEI = CreekID) %>% 
+  st_set_geometry(NULL) %>% 
+  inner_join(., iwr, by = 'sta') %>% 
+  mutate(
+    newComment = rCode
+  ) %>% 
+  left_join(classadd, by = c('wbid'))
+
+head(iwrraw)
+```
+
+Finally, we want to compare the results from the new workflow with those from the original to make sure we've done it right.  We use functions from the tbeptools package to estimate creek scores, then compare in a matrix. 
+
+```{r}
+library(tbeptools)
+
+# get new estimates
+tmpnew <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2021)
+
+# get old estimates
+data(tidalcreeks)
+data(iwrraw)
+tmpold <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2021)
+
+# compare
+tmpnewcmp <- tmpnew %>% 
+  select(wbid, JEI, class, scorenew = score)
+
+tmpoldcmp <- tmpold %>% 
+  select(wbid, JEI, class, scoreold = score)
+cmp <- full_join(tmpnewcmp, tmpoldcmp, by = c('wbid', 'JEI', 'class'))
+
+table(cmp[, c('scorenew', 'scoreold')])
+```

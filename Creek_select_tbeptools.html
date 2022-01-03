@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="M. W. Beck" />
+
+<meta name="date" content="2022-01-03" />
+
+<title>Creek Select for tbeptools</title>
+
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">SW FL Creek Resources</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li>
+  <a href="Additional-Resources.html">Additional Resources</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Creek Select for tbeptools</h1>
+<h4 class="author">M. W. Beck</h4>
+<h4 class="date">2022-01-03</h4>
+
+</div>
+
+
+<pre class="r"><code>knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+
+library(sf)
+library(RODBC)
+library(dplyr)</code></pre>
+<p>This workflow was developed as a test case for updating data used to estimate tidal creek assessment cateogires using FLDEP IWR run data. In this example, we use IWR Run 61, but in theory it should work with any IWR run. The only requirements are:</p>
+<ul>
+<li>Install the R package dependencies above</li>
+<li>Download/extract the <code>.accdb</code> files for a selected run from here: <a href="https://publicfiles.dep.state.fl.us/dear/iwr/" class="uri">https://publicfiles.dep.state.fl.us/dear/iwr/</a></li>
+<li>Have access to the source tidal creek line file with creek ID (JEI) assignments created by MW.</li>
+<li>A WBID polygon shapefile for the appropriate run, which can be retrieved through web services.</li>
+</ul>
+<p>Below we set a path to the extracted location for the IWR database, load the tidal creek line file, and load the wbid polygone fil.</p>
+<pre class="r"><code># set database path
+pth &lt;- &quot;~/Desktop/iwr2021_run61_2021-05-27/&quot;
+
+# # to explore
+# con &lt;- odbcConnectAccess2007(&#39;C:/Users/mbeck/Desktop/iwr2021_run61_2021-05-27/iwr_run61_05272021.accdb&#39;)
+# sqlTables(con)
+# sqlFetch(con, &#39;station list&#39;)
+
+# source creek line file
+tdlcrk &lt;- st_read(&#39;shapes/TidalCreek_ALL_Line.shp&#39;, quiet = T)
+
+# wbid data, run 61 
+wbid &lt;- st_read(&#39;https://opendata.arcgis.com/datasets/d3bb23dc9507422a86c95eb5efc964c9_0.geojson&#39;, quiet = T) %&gt;% 
+  st_transform(crs = st_crs(tdlcrk))</code></pre>
+<p>Now we import the IWR run data for the entire state using an ODBC connection to the extracted folder. The following code just iterates through the approac <code>.accdb</code> files in the extrated folders, retrieves the data within a ten year window from the current run, and pulls out parameters of interest. This is done in a loop using a SQL. It only takes a few minutes to run and does not eat up a lot of memory.</p>
+<pre class="r"><code># this retrieves most recent ten years of iwr data (excluding incomplete current year)
+# filters only parameters in mcode below
+# used ODBC connect to access file
+# entire state
+
+# .accdb files to query
+dbs &lt;- list.files(pth, pattern = &#39;rawDataDB.*\\.accdb$&#39;, full.names = T)
+
+# the current year of interest, used to build the query for ten prior years
+curyr &lt;- gsub(&#39;^.*\\_&#39;, &#39;&#39;, pth) %&gt;% 
+  as.Date %&gt;% 
+  strftime(&#39;%Y&#39;) %&gt;% 
+  as.numeric
+
+# query building tools
+mcode &lt;- c(&quot;CHLAC&quot;,&quot;COLOR&quot;,&quot;COND&quot;,&quot;DO&quot;,&quot;DOSAT&quot;,&quot;NO3O2&quot;,&quot;ORGN&quot;,&quot;SALIN&quot;,&quot;TKN&quot;,&quot;TN&quot;,&quot;TP&quot;,&quot;TSS&quot;,&quot;TURB&quot;) %&gt;% 
+  paste0(&quot;masterCode = &#39;&quot;, ., &quot;&#39;&quot;) %&gt;% 
+  paste0(., collapse = &#39; or &#39;)
+qry_fun &lt;- function(tab, curyr){
+  
+  out &lt;- paste0(&quot;select sta, year, month, day, masterCode, result, rCode from &quot;, tab, &quot; where year &gt; &quot;, curyr - 11, 
+                &quot; and year &lt; &quot;, curyr, 
+               &quot; and (&quot;, mcode, &quot;)&quot;
+               )
+  return(out)
+  
+}
+
+# loop through the accdb files
+iwr &lt;- NULL
+for(db in dbs){
+  
+  cat(basename(db), &#39;\n&#39;)
+  
+  # setup the connection
+  con &lt;- odbcConnectAccess2007(db)
+  
+  # build the query
+  qry &lt;- basename(db) %&gt;% 
+    gsub(&#39;DB|\\.accdb&#39;, &#39;&#39;, .) %&gt;% 
+    qry_fun(curyr)
+  
+  # retrieve the data
+  res &lt;- sqlQuery(con, qry)
+  
+  # add it to the output
+  iwr &lt;- rbind(iwr, res)
+  
+}</code></pre>
+<pre><code>## rawDataDB1.accdb 
+## rawDataDB2.accdb 
+## rawDataDB3.accdb 
+## rawDataDB4.accdb</code></pre>
+<pre class="r"><code>head(iwr)</code></pre>
+<pre><code>##                sta year month day masterCode result rCode
+## 1 112WRD  02234600 2015     8  24       COND 361.00  &lt;NA&gt;
+## 2 112WRD  02234600 2015     8  24         DO   6.00  &lt;NA&gt;
+## 3 112WRD  02234600 2015     8  24      DOSAT  71.20     +
+## 4 112WRD  02234600 2015     8  24      SALIN   0.18     +
+## 5 112WRD  02234600 2016     5   4       COND 365.00  &lt;NA&gt;
+## 6 112WRD  02234600 2016     5   4         DO   0.90  &lt;NA&gt;</code></pre>
+<p>Now we need to get station lat/lon data for intersection with the tidal creek line layer. This is for the entire state and is retrieved from an ODBC connection to the extracted folder.</p>
+<pre class="r"><code># # from geojson for run61, as an alternative
+# stas &lt;- st_read(&#39;https://opendata.arcgis.com/datasets/03dd8da6f071416bafea23d5bcb41c78_1.geojson&#39;, quiet = T)
+
+stas &lt;- list.files(pth, pattern = &#39;^iwr\\_run&#39;, full.names = T) %&gt;% 
+  odbcConnectAccess2007 %&gt;% 
+  sqlFetch(&#39;station list&#39;) %&gt;% 
+  filter(STA %in% unique(iwr$sta)) %&gt;% 
+  st_as_sf(coords = c(&#39;LONG&#39;, &#39;LAT&#39;), crs = 4326) %&gt;% 
+  st_transform(crs = st_crs(tdlcrk))
+
+head(stas)</code></pre>
+<pre><code>## Simple feature collection with 6 features and 17 fields
+## Geometry type: POINT
+## Dimension:     XY
+## Bounding box:  xmin: 344985.7 ymin: 3085618 xmax: 441480.4 ymax: 3186780
+## Projected CRS: NAD83 / UTM zone 17N
+##                STA                         NAME1   WBID
+## 1 21FLCEN G3CE0033             Gum Lake @ Center 1488C1
+## 2 21FLCEN G3CE0035           Lake Daisy @ Center  1539R
+## 3 21FLCEN G3CE0037 Twin Lakes @ Center of W Lobe  1613F
+## 4 21FLCEN G3CE0039          Lake Haines @ Center  1488C
+## 5 21FLCEN G3CE0040           Lake Henry @ center  1504A
+## 6       21FLFSI CB                            CB 1345G1
+##                                            COMMENTS NOBS   BD   ED NOBS2 BD2
+## 1 New station assigned to 1488C1, Run 61 - P.Homann   51 2020 2020    NA  NA
+## 2  New station assigned to 1539R, Run 61 - P.Homann   30 2020 2020    NA  NA
+## 3  New station assigned to 1613F, Run 61 - P.Homann   50 2020 2020    NA  NA
+## 4  New station assigned to 1488C, Run 61 - P.Homann   51 2020 2020    NA  NA
+## 5  New station assigned to 1504A, Run 61 - P.Homann   51 2020 2020    NA  NA
+## 6 New station assigned to REVIEW, Run 61 - P.Homann   63 2019 2020    NA  NA
+##   ED2 NOBS_BD_ED_UPDATE COUNTY    RUN     QA_BY QA_RUN wq bio
+## 1  NA            Run 61   Polk Run 61 B.Spencer Run 61  1   1
+## 2  NA            Run 61   Polk Run 61 B.Spencer Run 61  1   1
+## 3  NA            Run 61   Polk Run 61 B.Spencer Run 61  1   1
+## 4  NA            Run 61   Polk Run 61 B.Spencer Run 61  1   1
+## 5  NA            Run 61   Polk Run 61 B.Spencer Run 61  1   1
+## 6  NA            Run 61 Citrus Run 61 B.Spencer Run 61  1  NA
+##                   geometry
+## 1 POINT (428392.8 3112094)
+## 2   POINT (435146 3096966)
+## 3 POINT (441480.4 3085618)
+## 4   POINT (430662 3107595)
+## 5 POINT (434378.7 3107528)
+## 6 POINT (344985.7 3186780)</code></pre>
+<p>The next step is to create a polyline file that is similar to the source file, but includes an intersection with the WBID layer. It also includes creek ID (JEI), class, and creek length (total across WBIDs). It is specific to southwest Florida. This reproduces the <code>tidalcreeks</code> sf data object in tbeptools for the current wBID.</p>
+<pre class="r"><code># create tidalcreeks polyline file with wbid, class, jei info -------------
+
+# intersect creek lines with wbids
+tidalcreeks &lt;- st_intersection(tdlcrk, wbid) %&gt;% 
+  st_transform(4326) %&gt;% 
+  arrange(CreekID) %&gt;% 
+  mutate(
+    id = 1:nrow(.)
+  ) %&gt;% 
+  select(id, name = Name, JEI = CreekID, wbid = WBID, class = CLASS, Creek_Length_m = Total_m)
+
+# fix rownames
+row.names(tidalcreeks) &lt;- 1:nrow(tidalcreeks)
+
+head(tidalcreeks)</code></pre>
+<pre><code>## Simple feature collection with 6 features and 6 fields
+## Geometry type: GEOMETRY
+## Dimension:     XY
+## Bounding box:  xmin: -82.34154 ymin: 26.89042 xmax: -82.29655 ymax: 26.95527
+## Geodetic CRS:  WGS 84
+##   id         name  JEI  wbid class Creek_Length_m
+## 1  1   Rock Creek CC01  2052    3M       6443.083
+## 2  2   Rock Creek CC01 1983B     2       6443.083
+## 3  3 Oyster Creek CC02 1983B     2      10175.167
+## 4  4 Oyster Creek CC02  2067    3M      10175.167
+## 5  5   Buck Creek CC03 1983B     2       2251.188
+## 6  6   Buck Creek CC03  2068    3M       2251.188
+##                         geometry
+## 1 MULTILINESTRING ((-82.33006...
+## 2 LINESTRING (-82.33869 26.92...
+## 3 MULTILINESTRING ((-82.33188...
+## 4 MULTILINESTRING ((-82.3194 ...
+## 5 LINESTRING (-82.31512 26.89...
+## 6 LINESTRING (-82.30026 26.89...</code></pre>
+<p>The final step is to extract the IWR station data at the state level to tidal creeks in southwest Florida. This is done by buffering the original creek line file (200m, flat ends), intersecting the buffered file with the station lat/lon file, and uisng an inner join by station. Finally, the WBID class is added. This is reproducing the <code>iwrraw</code> file from the tbeptools package.</p>
+<pre class="r"><code># wbid classes from wbid, to join
+classadd &lt;- wbid %&gt;% 
+  select(wbid = WBID, class= CLASS) %&gt;% 
+  st_set_geometry(NULL) %&gt;% 
+  unique
+
+# assigns stations to creek id basedon buffer, wbid already in dataset
+# pull station data with the intersect, add class column
+iwrraw &lt;- st_buffer(tdlcrk, dist = 200, endCapStyle = &#39;FLAT&#39;) %&gt;% 
+  st_intersection(stas, .) %&gt;% 
+  select(sta = STA, wbid = WBID, JEI = CreekID) %&gt;% 
+  st_set_geometry(NULL) %&gt;% 
+  inner_join(., iwr, by = &#39;sta&#39;) %&gt;% 
+  mutate(
+    newComment = rCode
+  ) %&gt;% 
+  left_join(classadd, by = c(&#39;wbid&#39;))
+
+head(iwrraw)</code></pre>
+<pre><code>##              sta wbid  JEI year month day masterCode result rCode newComment
+## 1 21FLCHARLBANG1 2052 CC01 2011     1   3      CHLAC   0.86     I          I
+## 2 21FLCHARLBANG1 2052 CC01 2011     1   3      COLOR   5.10     I          I
+## 3 21FLCHARLBANG1 2052 CC01 2011     1   3         DO   5.20  &lt;NA&gt;       &lt;NA&gt;
+## 4 21FLCHARLBANG1 2052 CC01 2011     1   3      DOSAT  67.70     +          +
+## 5 21FLCHARLBANG1 2052 CC01 2011     1   3      NO3O2   0.01  &lt;NA&gt;       &lt;NA&gt;
+## 6 21FLCHARLBANG1 2052 CC01 2011     1   3      SALIN  33.30  &lt;NA&gt;       &lt;NA&gt;
+##   class
+## 1    3M
+## 2    3M
+## 3    3M
+## 4    3M
+## 5    3M
+## 6    3M</code></pre>
+<p>Finally, we want to compare the results from the new workflow with those from the original to make sure we’ve done it right. We use functions from the tbeptools package to estimate creek scores, then compare in a matrix.</p>
+<pre class="r"><code>library(tbeptools)
+
+# get new estimates
+tmpnew &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2021)
+
+# get old estimates
+data(tidalcreeks)
+data(iwrraw)
+tmpold &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2021)
+
+# compare
+tmpnewcmp &lt;- tmpnew %&gt;% 
+  select(wbid, JEI, class, scorenew = score)
+
+tmpoldcmp &lt;- tmpold %&gt;% 
+  select(wbid, JEI, class, scoreold = score)
+cmp &lt;- full_join(tmpnewcmp, tmpoldcmp, by = c(&#39;wbid&#39;, &#39;JEI&#39;, &#39;class&#39;))
+
+table(cmp[, c(&#39;scorenew&#39;, &#39;scoreold&#39;)])</code></pre>
+<pre><code>##              scoreold
+## scorenew      Caution Investigate Monitor No Data Prioritize
+##   Caution          18           0       0       0          0
+##   Investigate       0          32       1       0          0
+##   Monitor           0           0     131       7          0
+##   No Data           0           0       0     396          0
+##   Prioritize        0           0       0       0         20</code></pre>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
