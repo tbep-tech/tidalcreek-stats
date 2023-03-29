@@ -14,8 +14,8 @@
 
 <title>Additional Resources</title>
 
-<script src="site_libs/header-attrs-2.9/header-attrs.js"></script>
-<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/header-attrs-2.21/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
@@ -61,6 +61,7 @@ if (window.hljs) {
 
 
 
+
 <style type = "text/css">
 .main-container {
   max-width: 940px;
@@ -81,6 +82,9 @@ button.code-folding-btn:focus {
 }
 summary {
   display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
 }
 pre code {
   padding: 0;
@@ -138,11 +142,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -171,8 +179,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -180,16 +188,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -233,7 +234,7 @@ $(document).ready(function () {
 <div class="navbar navbar-default  navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
@@ -269,26 +270,102 @@ $(document).ready(function () {
 
 <div id="background" class="section level1">
 <h1>Background</h1>
-<p>This page provides additional information on details used in construction of the tidal creeks dashboard as well as summaries of various aspects of analysis conducted to identify management tools related to evaluating tidal creek condition. These links will be updates as additional analysis is conducted and additional features are added to the dashboard.</p>
+<p>This page provides additional information on details used in
+construction of the tidal creeks dashboard as well as summaries of
+various aspects of analysis conducted to identify management tools
+related to evaluating tidal creek condition. These links will be updates
+as additional analysis is conducted and additional features are added to
+the dashboard.</p>
 <div id="creek-length-adjustment" class="section level3">
-<h3><a href="https://tbep-tech.github.io/tidalcreek-stats/docs/CreekLength.pdf" target="_blank">Creek Length Adjustment</a></h3>
-<p>This link details the assessment of creek length as a metric to develop the Caution level criteria. This is an area of current research. The original regression relationship was statistically significant and was supported by other analysis suggesting that creek length was a contributing factor explaining variation in nutrient concentrations in these creeks.However, the relationships were somewhat weak. Over time, stakeholders should continue to evaluate the utility of the creek length adjustment relative to simply using the TN indicator threshold value of 1.1 mg/l annual geometric mean as a threshold for the Caution level. Assessing these results over time and comparing the relative accuracy of these metrics against other indicators will improve the reliability of the Caution level for defining creeks that may be trending towards an undesirable condition.</p>
+<h3><a
+href="https://tbep-tech.github.io/tidalcreek-stats/docs/CreekLength.pdf"
+target="_blank">Creek Length Adjustment</a></h3>
+<p>This link details the assessment of creek length as a metric to
+develop the Caution level criteria. This is an area of current research.
+The original regression relationship was statistically significant and
+was supported by other analysis suggesting that creek length was a
+contributing factor explaining variation in nutrient concentrations in
+these creeks.However, the relationships were somewhat weak. Over time,
+stakeholders should continue to evaluate the utility of the creek length
+adjustment relative to simply using the TN indicator threshold value of
+1.1 mg/l annual geometric mean as a threshold for the Caution level.
+Assessing these results over time and comparing the relative accuracy of
+these metrics against other indicators will improve the reliability of
+the Caution level for defining creeks that may be trending towards an
+undesirable condition.</p>
 </div>
 <div id="monte-carlo-assessment" class="section level3">
-<h3><a href="https://tbep-tech.github.io/tidalcreek-stats/docs/MCMC.pdf" target="_blank">Monte Carlo Assessment</a></h3>
-<p>This link provides code to replicate the monte carlo analysis used to identify the “Investigate” criteria for the WQAF. The code is written in Statistical Analysis Systems (SAS) software but should be easily transferable to R software though results may differ slightly due to differences in the random seed algorithms. The results defined by this analysis are those currently used in the dashboard and as reported in Wessel et al. 2021 which differ slightly from that initially reported in Janicki and Mote (2016 and 2019) as the computer coding methods were refined over time.</p>
+<h3><a href="https://tbep-tech.github.io/tidalcreek-stats/docs/MCMC.pdf"
+target="_blank">Monte Carlo Assessment</a></h3>
+<p>This link provides code to replicate the monte carlo analysis used to
+identify the “Investigate” criteria for the WQAF. The code is written in
+Statistical Analysis Systems (SAS) software but should be easily
+transferable to R software though results may differ slightly due to
+differences in the random seed algorithms. The results defined by this
+analysis are those currently used in the dashboard and as reported in
+Wessel et al. 2021 which differ slightly from that initially reported in
+Janicki and Mote (2016 and 2019) as the computer coding methods were
+refined over time.</p>
 </div>
 <div id="dissolved-oxygen-assesment" class="section level3">
-<h3><a href="https://tbep-tech.github.io/tidalcreek-stats/docs/DOEval.pdf" target="_blank">Dissolved Oxygen Assesment</a></h3>
-<p>This pdf is an excerpt from the 2016 tidal creek study that describes an evaluation into the current and potential alternative DO criteria for southwest Florida tidal creeks. it is an area of research that warrants further investigation as an indicator of tidal creek condition.</p>
+<h3><a
+href="https://tbep-tech.github.io/tidalcreek-stats/docs/DOEval.pdf"
+target="_blank">Dissolved Oxygen Assesment</a></h3>
+<p>This pdf is an excerpt from the 2016 tidal creek study that describes
+an evaluation into the current and potential alternative DO criteria for
+southwest Florida tidal creeks. it is an area of research that warrants
+further investigation as an indicator of tidal creek condition.</p>
 </div>
 <div id="dilution-along-the-salinity-gradient" class="section level3">
-<h3><a href="https://tbep-tech.github.io/tidalcreek-stats/docs/Dilution.pdf" target="_blank">Dilution Along the Salinity Gradient</a></h3>
-<p>This pdf is an excerpt from the 2019 tidal creek study that describes an evaluation of dilution of nutrient concentrations along the salinity gradient. The analysis tested the conceptual model that dilution is linear and found organic nitrogen to be in supply relative to the linear dilution assumption while inorganic nitrogen was rapidly assimilated along the salinity gradient. This has implications for developing nutrient criteria for tidal creeks using conservative assumptions regarding nutrients as well as the role of natural emergent vegetation (e.g. mangroves) and decomposition of allochthonous material as a natural source of organic nitrogen in addition to inputs from anthropogenic sources.</p>
+<h3><a
+href="https://tbep-tech.github.io/tidalcreek-stats/docs/Dilution.pdf"
+target="_blank">Dilution Along the Salinity Gradient</a></h3>
+<p>This pdf is an excerpt from the 2019 tidal creek study that describes
+an evaluation of dilution of nutrient concentrations along the salinity
+gradient. The analysis tested the conceptual model that dilution is
+linear and found organic nitrogen to be in supply relative to the linear
+dilution assumption while inorganic nitrogen was rapidly assimilated
+along the salinity gradient. This has implications for developing
+nutrient criteria for tidal creeks using conservative assumptions
+regarding nutrients as well as the role of natural emergent vegetation
+(e.g. mangroves) and decomposition of allochthonous material as a
+natural source of organic nitrogen in addition to inputs from
+anthropogenic sources.</p>
 </div>
 <div id="advancing-tidal-creeks-research" class="section level3">
-<h3><a href="https://tbep-tech.github.io/tidalcreek-stats/docs/Future.pdf" target="_blank">Advancing Tidal Creeks Research</a></h3>
-<p>This excerpt is from the 2016 report describing areas to advance future tidal creek research including the need for additional methods to characterize the role of benthic algal productivity, the role of emergent wetland vegetation, and the case for urbanization resulting in decreased productivity in these creeks.Hopefully, the dashboard tool and water quality assessment framework provide a foundation from which to better understand the role of physical and biological interactions with observed water quality in these systems.</p>
+<h3><a
+href="https://tbep-tech.github.io/tidalcreek-stats/docs/Future.pdf"
+target="_blank">Advancing Tidal Creeks Research</a></h3>
+<p>This excerpt is from the 2016 report describing areas to advance
+future tidal creek research including the need for additional methods to
+characterize the role of benthic algal productivity, the role of
+emergent wetland vegetation, and the case for urbanization resulting in
+decreased productivity in these creeks.Hopefully, the dashboard tool and
+water quality assessment framework provide a foundation from which to
+better understand the role of physical and biological interactions with
+observed water quality in these systems.</p>
+</div>
+<div id="update-iwr-data-for-dashboard-and-tbeptools"
+class="section level3">
+<h3><a
+href="https://tbep-tech.github.io/tidalcreek-stats/Creek_select_tbeptools"
+target="_blank">Update IWR data for dashboard and tbeptools</a></h3>
+<p>This workflow describes how to extract IWR data for new runs to
+update data used in the tidal creeks dashboard and tbeptools. Note that
+additional steps are needed that can only be conducted by TBEP. The
+general workflow is as follows:</p>
+<ol style="list-style-type: decimal">
+<li>Run the access workflow from the above link</li>
+<li>Save the iwrraw and tidalcreeks RData objects to tbeptools (and
+update a bunch of stuff in tbeptools)</li>
+<li>Run <a
+href="https://github.com/tbep-tech/tidalcreek-dash/blob/master/R/dat_proc.R"
+target="_blank">R/dat_proc.R</a> in the tidalcreeks dashboard repo after
+installing new version of tbeptools</li>
+<li>Push updated tidalcreeks repo to GitHub, pull to TBEP shiny
+server</li>
+<li>Update server image with new version of tbeptools</li>
+</ol>
 </div>
 </div>
 

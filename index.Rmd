@@ -20,6 +20,11 @@ library(here)
 # Background
 This page is established to provide information on updates to the SW FL Tidal Creeks dashboard [dashboard](https://shiny.tbep.org/tidalcreek-dash/?_ga=2.9967863.311877574.1624202665-1007913767.1624202665#section-overview){target="_blank"} as well as areas of current research and future direction (see additional resources tab), conveniently accessed in one location. This page will be continually updated using open science principals as new analyses are conducted and new features are incorporated into the dashboard.
 
+### 3/29/23
+### IWR Run64 Updates
+
+The [dashboard](https://shiny.tbep.org/tidalcreek-dash/?_ga=2.9967863.311877574.1624202665-1007913767.1624202665#section-overview){target="_blank"} has been updated using IWR Run 64 water quality data, as has the [tbeptools](https://tbep-tech.github.io){target="_blank"} R package that the dashboard uses. The data updates follow a workflow outlined on [this page](https://tbep-tech.github.io/tidalcreek-stats/Creek_select_tbeptools). 
+
 ### 7/19/21
 ### IWR Run61 Updates
 
