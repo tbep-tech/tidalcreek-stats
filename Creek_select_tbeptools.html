@@ -11,11 +11,11 @@
 
 <meta name="author" content="M. W. Beck" />
 
-<meta name="date" content="2022-01-03" />
+<meta name="date" content="2023-03-29" />
 
 <title>Creek Select for tbeptools</title>
 
-<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.21/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -62,6 +62,7 @@ if (window.hljs) {
 
 
 
+
 <style type = "text/css">
 .main-container {
   max-width: 940px;
@@ -82,6 +83,9 @@ button.code-folding-btn:focus {
 }
 summary {
   display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
 }
 pre code {
   padding: 0;
@@ -139,11 +143,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -172,8 +180,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -181,16 +189,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -234,7 +235,7 @@ $(document).ready(function () {
 <div class="navbar navbar-default  navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
@@ -263,7 +264,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Creek Select for tbeptools</h1>
 <h4 class="author">M. W. Beck</h4>
-<h4 class="date">2022-01-03</h4>
+<h4 class="date">2023-03-29</h4>
 
 </div>
 
@@ -272,17 +273,32 @@ $(document).ready(function () {
 
 library(sf)
 library(RODBC)
-library(dplyr)</code></pre>
-<p>This workflow was developed as a test case for updating data used to estimate tidal creek assessment cateogires using FLDEP IWR run data. In this example, we use IWR Run 61, but in theory it should work with any IWR run. The only requirements are:</p>
+library(dplyr)
+library(here)</code></pre>
+<p>This workflow was developed as a test case for updating data used to
+estimate tidal creek assessment cateogires using FLDEP IWR run data. In
+this example, we use IWR Run 64, but in theory it should work with any
+IWR run. The only requirements are:</p>
 <ul>
 <li>Install the R package dependencies above</li>
-<li>Download/extract the <code>.accdb</code> files for a selected run from here: <a href="https://publicfiles.dep.state.fl.us/dear/iwr/" class="uri">https://publicfiles.dep.state.fl.us/dear/iwr/</a></li>
-<li>Have access to the source tidal creek line file with creek ID (JEI) assignments created by MW.</li>
-<li>A WBID polygon shapefile for the appropriate run, which can be retrieved through web services.</li>
+<li>Download/extract the <code>.accdb</code> files for a selected run
+from here: <a href="https://publicfiles.dep.state.fl.us/dear/iwr/"
+class="uri">https://publicfiles.dep.state.fl.us/dear/iwr/</a></li>
+<li>Have access to the source tidal creek line file with creek ID (JEI)
+assignments created by MW (included in this <a
+href="https://tbep-tech.github.io/tidalcreek-stats/">repository</a>).</li>
+<li>A WBID polygon shapefile for the appropriate run, which can be
+retrieved through web services (<a
+href="https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about"
+class="uri">https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about</a>.
+The Run64 WBID shapefiles are also available from the folder here: <a
+href="http://publicfiles.dep.state.fl.us/dear/kristin/"
+class="uri">http://publicfiles.dep.state.fl.us/dear/kristin/</a>.</li>
 </ul>
-<p>Below we set a path to the extracted location for the IWR database, load the tidal creek line file, and load the wbid polygone fil.</p>
+<p>Below we set a path to the extracted location for the IWR database,
+load the tidal creek line file, and load the wbid polygone fil.</p>
 <pre class="r"><code># set database path
-pth &lt;- &quot;~/Desktop/iwr2021_run61_2021-05-27/&quot;
+pth &lt;- &quot;~/Desktop/iwr2022_run64_2022-11-29/&quot;
 
 # # to explore
 # con &lt;- odbcConnectAccess2007(&#39;C:/Users/mbeck/Desktop/iwr2021_run61_2021-05-27/iwr_run61_05272021.accdb&#39;)
@@ -290,12 +306,17 @@ pth &lt;- &quot;~/Desktop/iwr2021_run61_2021-05-27/&quot;
 # sqlFetch(con, &#39;station list&#39;)
 
 # source creek line file
-tdlcrk &lt;- st_read(&#39;shapes/TidalCreek_ALL_Line.shp&#39;, quiet = T)
+tdlcrk &lt;- st_read(here(&#39;shapes/TidalCreek_ALL_Line.shp&#39;), quiet = T)
 
-# wbid data, run 61 
-wbid &lt;- st_read(&#39;https://opendata.arcgis.com/datasets/d3bb23dc9507422a86c95eb5efc964c9_0.geojson&#39;, quiet = T) %&gt;% 
+# wbid data, run 64 
+wbid &lt;- st_read(&#39;https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/WBIDS/MapServer/0/query?outFields=*&amp;where=1%3D1&amp;f=geojson&#39;, quiet = T) %&gt;% 
   st_transform(crs = st_crs(tdlcrk))</code></pre>
-<p>Now we import the IWR run data for the entire state using an ODBC connection to the extracted folder. The following code just iterates through the approac <code>.accdb</code> files in the extrated folders, retrieves the data within a ten year window from the current run, and pulls out parameters of interest. This is done in a loop using a SQL. It only takes a few minutes to run and does not eat up a lot of memory.</p>
+<p>Now we import the IWR run data for the entire state using an ODBC
+connection to the extracted folder. The following code just iterates
+through the approac <code>.accdb</code> files in the extrated folders,
+retrieves the data within a ten year window from the current run, and
+pulls out parameters of interest. This is done in a loop using a SQL. It
+only takes a few minutes to run and does not eat up a lot of memory.</p>
 <pre class="r"><code># this retrieves most recent ten years of iwr data (excluding incomplete current year)
 # filters only parameters in mcode below
 # used ODBC connect to access file
@@ -350,59 +371,77 @@ for(db in dbs){
 ## rawDataDB3.accdb 
 ## rawDataDB4.accdb</code></pre>
 <pre class="r"><code>head(iwr)</code></pre>
-<pre><code>##                sta year month day masterCode result rCode
-## 1 112WRD  02234600 2015     8  24       COND 361.00  &lt;NA&gt;
-## 2 112WRD  02234600 2015     8  24         DO   6.00  &lt;NA&gt;
-## 3 112WRD  02234600 2015     8  24      DOSAT  71.20     +
-## 4 112WRD  02234600 2015     8  24      SALIN   0.18     +
-## 5 112WRD  02234600 2016     5   4       COND 365.00  &lt;NA&gt;
-## 6 112WRD  02234600 2016     5   4         DO   0.90  &lt;NA&gt;</code></pre>
-<p>Now we need to get station lat/lon data for intersection with the tidal creek line layer. This is for the entire state and is retrieved from an ODBC connection to the extracted folder.</p>
-<pre class="r"><code># # from geojson for run61, as an alternative
-# stas &lt;- st_read(&#39;https://opendata.arcgis.com/datasets/03dd8da6f071416bafea23d5bcb41c78_1.geojson&#39;, quiet = T)
-
-stas &lt;- list.files(pth, pattern = &#39;^iwr\\_run&#39;, full.names = T) %&gt;% 
-  odbcConnectAccess2007 %&gt;% 
-  sqlFetch(&#39;station list&#39;) %&gt;% 
-  filter(STA %in% unique(iwr$sta)) %&gt;% 
-  st_as_sf(coords = c(&#39;LONG&#39;, &#39;LAT&#39;), crs = 4326) %&gt;% 
+<pre><code>##                sta year month day masterCode    result rCode
+## 1 112WRD  02231400 2021     9   1       COND 201.00000  &lt;NA&gt;
+## 2 112WRD  02231400 2021     9   1         DO   5.30000  &lt;NA&gt;
+## 3 112WRD  02231400 2021     9   1       ORGN   0.27500     U
+## 4 112WRD  02231400 2021     9   1         TN   0.17425     +
+## 5 112WRD  02234600 2015     8  24       COND 361.00000  &lt;NA&gt;
+## 6 112WRD  02234600 2015     8  24         DO   6.00000  &lt;NA&gt;</code></pre>
+<p>Now we need to get station lat/lon data for intersection with the
+tidal creek line layer. This is for the entire state and is retrieved
+from an ODBC connection to the extracted folder.</p>
+<pre class="r"><code># # from geojson for run61
+staraw &lt;- st_read(&#39;https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/IMPAIRED_WATERS/MapServer/1/query?outFields=*&amp;where=1%3D1&amp;f=geojson&#39;, quiet = T)
+stas &lt;- staraw %&gt;% 
+  filter(STATION_ID %in% iwr$sta) %&gt;% 
   st_transform(crs = st_crs(tdlcrk))
 
+# pull from access, currently doesn&#39;t work
+# stas &lt;- list.files(pth, pattern = &#39;^iwr\\_run&#39;, full.names = T) %&gt;% 
+#   odbcConnectAccess2007 %&gt;% 
+#   sqlFetch(&#39;station list&#39;) %&gt;% 
+#   filter(STA %in% unique(iwr$sta)) %&gt;% 
+#   st_as_sf(coords = c(&#39;LONG&#39;, &#39;LAT&#39;), crs = 4326) %&gt;% 
+#   st_transform(crs = st_crs(tdlcrk))
+
 head(stas)</code></pre>
-<pre><code>## Simple feature collection with 6 features and 17 fields
+<pre><code>## Simple feature collection with 6 features and 13 fields
 ## Geometry type: POINT
 ## Dimension:     XY
-## Bounding box:  xmin: 344985.7 ymin: 3085618 xmax: 441480.4 ymax: 3186780
+## Bounding box:  xmin: 397550 ymin: 3066948 xmax: 522199.8 ymax: 3232253
 ## Projected CRS: NAD83 / UTM zone 17N
-##                STA                         NAME1   WBID
-## 1 21FLCEN G3CE0033             Gum Lake @ Center 1488C1
-## 2 21FLCEN G3CE0035           Lake Daisy @ Center  1539R
-## 3 21FLCEN G3CE0037 Twin Lakes @ Center of W Lobe  1613F
-## 4 21FLCEN G3CE0039          Lake Haines @ Center  1488C
-## 5 21FLCEN G3CE0040           Lake Henry @ center  1504A
-## 6       21FLFSI CB                            CB 1345G1
-##                                            COMMENTS NOBS   BD   ED NOBS2 BD2
-## 1 New station assigned to 1488C1, Run 61 - P.Homann   51 2020 2020    NA  NA
-## 2  New station assigned to 1539R, Run 61 - P.Homann   30 2020 2020    NA  NA
-## 3  New station assigned to 1613F, Run 61 - P.Homann   50 2020 2020    NA  NA
-## 4  New station assigned to 1488C, Run 61 - P.Homann   51 2020 2020    NA  NA
-## 5  New station assigned to 1504A, Run 61 - P.Homann   51 2020 2020    NA  NA
-## 6 New station assigned to REVIEW, Run 61 - P.Homann   63 2019 2020    NA  NA
-##   ED2 NOBS_BD_ED_UPDATE COUNTY    RUN     QA_BY QA_RUN wq bio
-## 1  NA            Run 61   Polk Run 61 B.Spencer Run 61  1   1
-## 2  NA            Run 61   Polk Run 61 B.Spencer Run 61  1   1
-## 3  NA            Run 61   Polk Run 61 B.Spencer Run 61  1   1
-## 4  NA            Run 61   Polk Run 61 B.Spencer Run 61  1   1
-## 5  NA            Run 61   Polk Run 61 B.Spencer Run 61  1   1
-## 6  NA            Run 61 Citrus Run 61 B.Spencer Run 61  1  NA
-##                   geometry
-## 1 POINT (428392.8 3112094)
-## 2   POINT (435146 3096966)
-## 3 POINT (441480.4 3085618)
-## 4   POINT (430662 3107595)
-## 5 POINT (434378.7 3107528)
-## 6 POINT (344985.7 3186780)</code></pre>
-<p>The next step is to create a polyline file that is similar to the source file, but includes an intersection with the WBID layer. It also includes creek ID (JEI), class, and creek length (total across WBIDs). It is specific to southwest Florida. This reproduces the <code>tidalcreeks</code> sf data object in tbeptools for the current wBID.</p>
+##   OBJECTID        STATION_ID                                     STATION_NAME
+## 1      950  112WRD  02231400             BLUE CYPRESS LAKE NR FELLSMERE, FLA.
+## 2     1136  112WRD  02239500                    SILVER SPRINGS NEAR OCALA, FL
+## 3     1137  112WRD  02239501                      SILVER RIVER NEAR OCALA, FL
+## 4     1210  112WRD  02234600                   WEKIWA SPRINGS NEAR APOPKA, FL
+## 5     1211  112WRD  02234610                     ROCK SPRINGS NEAR APOPKA, FL
+## 6     1228 112WRD  022349993 WEKIVA RIVER AT OLD RR CROSSING NEAR SANFORD, FL
+##   WATERBODY_ID
+## 1        2893V
+## 2        2772A
+## 3        2772C
+## 4        2956C
+## 5         2967
+## 6        2956A
+##                                                                                                                                                                                                    COMMENTS
+## 1                                                                                                                                            Lat/Longs updated based on values from USGS, Run 58 - R.Stuart
+## 2                                                                                 Changed by j. Paulsen Spring WBID edits; by J Hand 3/2009; Lat/Longs updated based on values from USGS, Run 58 - R.Stuart
+## 3                                                                                 Changed by j. Paulsen Spring WBID edits; by J Hand 3/2009; Lat/Longs updated based on values from USGS, Run 58 - R.Stuart
+## 4                                                                                                                                            Lat/Longs updated based on values from USGS, Run 58 - R.Stuart
+## 5 Reassigned from 2967 to 2967A, Run 50 - J.Albright; Reassigned from 2967A to 2967, Run 50 - J.Albright; Lat/Longs updated based on values from USGS, Run 58 - R.StuartLat/long updated, Run 63 - R.Stuart
+## 6                                                                                                                                            Lat/Longs updated based on values from USGS, Run 58 - R.Stuart
+##   LATITUDE LONGITUDE RESULT_COUNT BEGIN_DATE END_DATE TMDL_RUN
+## 1 27.72670 -80.77478          979       1966     2021     &lt;NA&gt;
+## 2 29.21248 -82.05398         5315       1906     2013     &lt;NA&gt;
+## 3 29.21498 -82.04120          262       1968     2022   Run 36
+## 4 28.71222 -81.45979         2436       1932     2022     &lt;NA&gt;
+## 5 28.75757 -81.49684         1465       1931     2022     &lt;NA&gt;
+## 6 28.79277 -81.41340          237       2015     2015     &lt;NA&gt;
+##   WATER_QUALITY_STATION BIOLOGY_STATION                 geometry
+## 1                     1               0 POINT (522199.8 3066948)
+## 2                     1               0   POINT (397550 3231987)
+## 3                     1               0 POINT (398794.8 3232253)
+## 4                     1               0 POINT (455092.7 3176189)
+## 5                     1               0   POINT (451495 3181228)
+## 6                     1               0 POINT (459654.6 3185097)</code></pre>
+<p>The next step is to create a polyline file that is similar to the
+source file, but includes an intersection with the WBID layer. It also
+includes creek ID (JEI), class, and creek length (total across WBIDs).
+It is specific to southwest Florida. This reproduces the
+<code>tidalcreeks</code> sf data object in tbeptools for the current
+wBID.</p>
 <pre class="r"><code># create tidalcreeks polyline file with wbid, class, jei info -------------
 
 # intersect creek lines with wbids
@@ -424,20 +463,25 @@ head(tidalcreeks)</code></pre>
 ## Bounding box:  xmin: -82.34154 ymin: 26.89042 xmax: -82.29655 ymax: 26.95527
 ## Geodetic CRS:  WGS 84
 ##   id         name  JEI  wbid class Creek_Length_m
-## 1  1   Rock Creek CC01  2052    3M       6443.083
-## 2  2   Rock Creek CC01 1983B     2       6443.083
+## 1  1   Rock Creek CC01 1983B     2       6443.083
+## 2  2   Rock Creek CC01  2052    3M       6443.083
 ## 3  3 Oyster Creek CC02 1983B     2      10175.167
 ## 4  4 Oyster Creek CC02  2067    3M      10175.167
 ## 5  5   Buck Creek CC03 1983B     2       2251.188
 ## 6  6   Buck Creek CC03  2068    3M       2251.188
 ##                         geometry
-## 1 MULTILINESTRING ((-82.33006...
-## 2 LINESTRING (-82.33869 26.92...
+## 1 LINESTRING (-82.33869 26.92...
+## 2 MULTILINESTRING ((-82.33006...
 ## 3 MULTILINESTRING ((-82.33188...
 ## 4 MULTILINESTRING ((-82.3194 ...
 ## 5 LINESTRING (-82.31512 26.89...
 ## 6 LINESTRING (-82.30026 26.89...</code></pre>
-<p>The final step is to extract the IWR station data at the state level to tidal creeks in southwest Florida. This is done by buffering the original creek line file (200m, flat ends), intersecting the buffered file with the station lat/lon file, and uisng an inner join by station. Finally, the WBID class is added. This is reproducing the <code>iwrraw</code> file from the tbeptools package.</p>
+<p>The final step is to extract the IWR station data at the state level
+to tidal creeks in southwest Florida. This is done by buffering the
+original creek line file (200m, flat ends), intersecting the buffered
+file with the station lat/lon file, and uisng an inner join by station.
+Finally, the WBID class is added. This is reproducing the
+<code>iwrraw</code> file from the tbeptools package.</p>
 <pre class="r"><code># wbid classes from wbid, to join
 classadd &lt;- wbid %&gt;% 
   select(wbid = WBID, class= CLASS) %&gt;% 
@@ -448,7 +492,7 @@ classadd &lt;- wbid %&gt;%
 # pull station data with the intersect, add class column
 iwrraw &lt;- st_buffer(tdlcrk, dist = 200, endCapStyle = &#39;FLAT&#39;) %&gt;% 
   st_intersection(stas, .) %&gt;% 
-  select(sta = STA, wbid = WBID, JEI = CreekID) %&gt;% 
+  select(sta = STATION_ID, wbid = WATERBODY_ID, JEI = CreekID) %&gt;% 
   st_set_geometry(NULL) %&gt;% 
   inner_join(., iwr, by = &#39;sta&#39;) %&gt;% 
   mutate(
@@ -458,12 +502,12 @@ iwrraw &lt;- st_buffer(tdlcrk, dist = 200, endCapStyle = &#39;FLAT&#39;) %&gt;%
 
 head(iwrraw)</code></pre>
 <pre><code>##              sta wbid  JEI year month day masterCode result rCode newComment
-## 1 21FLCHARLBANG1 2052 CC01 2011     1   3      CHLAC   0.86     I          I
-## 2 21FLCHARLBANG1 2052 CC01 2011     1   3      COLOR   5.10     I          I
-## 3 21FLCHARLBANG1 2052 CC01 2011     1   3         DO   5.20  &lt;NA&gt;       &lt;NA&gt;
-## 4 21FLCHARLBANG1 2052 CC01 2011     1   3      DOSAT  67.70     +          +
-## 5 21FLCHARLBANG1 2052 CC01 2011     1   3      NO3O2   0.01  &lt;NA&gt;       &lt;NA&gt;
-## 6 21FLCHARLBANG1 2052 CC01 2011     1   3      SALIN  33.30  &lt;NA&gt;       &lt;NA&gt;
+## 1 21FLCHARLBANG1 2052 CC01 2012     6   4      CHLAC  2.500  &lt;NA&gt;       &lt;NA&gt;
+## 2 21FLCHARLBANG1 2052 CC01 2012     6   4      COLOR 10.000  &lt;NA&gt;       &lt;NA&gt;
+## 3 21FLCHARLBANG1 2052 CC01 2012     6   4         DO  2.500     J          J
+## 4 21FLCHARLBANG1 2052 CC01 2012     6   4      DOSAT 38.500     +          +
+## 5 21FLCHARLBANG1 2052 CC01 2012     6   4      NO3O2  0.004     U          U
+## 6 21FLCHARLBANG1 2052 CC01 2012     6   4      SALIN 35.600  &lt;NA&gt;       &lt;NA&gt;
 ##   class
 ## 1    3M
 ## 2    3M
@@ -471,16 +515,20 @@ head(iwrraw)</code></pre>
 ## 4    3M
 ## 5    3M
 ## 6    3M</code></pre>
-<p>Finally, we want to compare the results from the new workflow with those from the original to make sure we’ve done it right. We use functions from the tbeptools package to estimate creek scores, then compare in a matrix.</p>
+<p>Finally, we want to compare the results from the new workflow with
+those from the original to make sure we’ve done it right. We use
+functions from the tbeptools package to estimate creek scores, then
+compare in a matrix (this returns the same since tbeptools has already
+been updatd with IWR run 64).</p>
 <pre class="r"><code>library(tbeptools)
 
 # get new estimates
-tmpnew &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2021)
+tmpnew &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2022)
 
 # get old estimates
 data(tidalcreeks)
 data(iwrraw)
-tmpold &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2021)
+tmpold &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2022)
 
 # compare
 tmpnewcmp &lt;- tmpnew %&gt;% 
@@ -494,10 +542,10 @@ table(cmp[, c(&#39;scorenew&#39;, &#39;scoreold&#39;)])</code></pre>
 <pre><code>##              scoreold
 ## scorenew      Caution Investigate Monitor No Data Prioritize
 ##   Caution          18           0       0       0          0
-##   Investigate       0          32       1       0          0
-##   Monitor           0           0     131       7          0
-##   No Data           0           0       0     396          0
-##   Prioritize        0           0       0       0         20</code></pre>
+##   Investigate       0          28       0       0          0
+##   Monitor           0           0     141       0          0
+##   No Data           0           0       0     405          0
+##   Prioritize        0           0       0       0         23</code></pre>
 
 
 

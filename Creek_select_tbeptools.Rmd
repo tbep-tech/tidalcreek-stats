@@ -11,20 +11,21 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 library(sf)
 library(RODBC)
 library(dplyr)
+library(here)
 ```
 
-This workflow was developed as a test case for updating data used to estimate tidal creek assessment cateogires using FLDEP IWR run data.  In this example, we use IWR Run 61, but in theory it should work with any IWR run. The only requirements are:
+This workflow was developed as a test case for updating data used to estimate tidal creek assessment cateogires using FLDEP IWR run data.  In this example, we use IWR Run 64, but in theory it should work with any IWR run. The only requirements are:
 
 * Install the R package dependencies above 
 * Download/extract the `.accdb` files for a selected run from here: <https://publicfiles.dep.state.fl.us/dear/iwr/>
-* Have access to the source tidal creek line file with creek ID (JEI) assignments created by MW.
-* A WBID polygon shapefile for the appropriate run, which can be retrieved through web services.
+* Have access to the source tidal creek line file with creek ID (JEI) assignments created by MW (included in this [repository](https://tbep-tech.github.io/tidalcreek-stats/)).
+* A WBID polygon shapefile for the appropriate run, which can be retrieved through web services (<https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about>.  The Run64 WBID shapefiles are also available from the folder here: <http://publicfiles.dep.state.fl.us/dear/kristin/>. 
 
 Below we set a path to the extracted location for the IWR database, load the tidal creek line file, and load the wbid polygone fil.
 
 ```{r}
 # set database path
-pth <- "~/Desktop/iwr2021_run61_2021-05-27/"
+pth <- "~/Desktop/iwr2022_run64_2022-11-29/"
 
 # # to explore
 # con <- odbcConnectAccess2007('C:/Users/mbeck/Desktop/iwr2021_run61_2021-05-27/iwr_run61_05272021.accdb')
@@ -32,10 +33,10 @@ pth <- "~/Desktop/iwr2021_run61_2021-05-27/"
 # sqlFetch(con, 'station list')
 
 # source creek line file
-tdlcrk <- st_read('shapes/TidalCreek_ALL_Line.shp', quiet = T)
+tdlcrk <- st_read(here('shapes/TidalCreek_ALL_Line.shp'), quiet = T)
 
-# wbid data, run 61 
-wbid <- st_read('https://opendata.arcgis.com/datasets/d3bb23dc9507422a86c95eb5efc964c9_0.geojson', quiet = T) %>% 
+# wbid data, run 64 
+wbid <- st_read('https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/WBIDS/MapServer/0/query?outFields=*&where=1%3D1&f=geojson', quiet = T) %>% 
   st_transform(crs = st_crs(tdlcrk))
 ```
 
@@ -98,15 +99,19 @@ head(iwr)
 Now we need to get station lat/lon data for intersection with the tidal creek line layer.  This is for the entire state and is retrieved from an ODBC connection to the extracted folder.
 
 ```{r}
-# # from geojson for run61, as an alternative
-# stas <- st_read('https://opendata.arcgis.com/datasets/03dd8da6f071416bafea23d5bcb41c78_1.geojson', quiet = T)
-
-stas <- list.files(pth, pattern = '^iwr\\_run', full.names = T) %>% 
-  odbcConnectAccess2007 %>% 
-  sqlFetch('station list') %>% 
-  filter(STA %in% unique(iwr$sta)) %>% 
-  st_as_sf(coords = c('LONG', 'LAT'), crs = 4326) %>% 
+# # from geojson for run61
+staraw <- st_read('https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/IMPAIRED_WATERS/MapServer/1/query?outFields=*&where=1%3D1&f=geojson', quiet = T)
+stas <- staraw %>% 
+  filter(STATION_ID %in% iwr$sta) %>% 
   st_transform(crs = st_crs(tdlcrk))
+
+# pull from access, currently doesn't work
+# stas <- list.files(pth, pattern = '^iwr\\_run', full.names = T) %>% 
+#   odbcConnectAccess2007 %>% 
+#   sqlFetch('station list') %>% 
+#   filter(STA %in% unique(iwr$sta)) %>% 
+#   st_as_sf(coords = c('LONG', 'LAT'), crs = 4326) %>% 
+#   st_transform(crs = st_crs(tdlcrk))
 
 head(stas)
 ```
@@ -144,7 +149,7 @@ classadd <- wbid %>%
 # pull station data with the intersect, add class column
 iwrraw <- st_buffer(tdlcrk, dist = 200, endCapStyle = 'FLAT') %>% 
   st_intersection(stas, .) %>% 
-  select(sta = STA, wbid = WBID, JEI = CreekID) %>% 
+  select(sta = STATION_ID, wbid = WATERBODY_ID, JEI = CreekID) %>% 
   st_set_geometry(NULL) %>% 
   inner_join(., iwr, by = 'sta') %>% 
   mutate(
@@ -155,18 +160,18 @@ iwrraw <- st_buffer(tdlcrk, dist = 200, endCapStyle = 'FLAT') %>%
 head(iwrraw)
 ```
 
-Finally, we want to compare the results from the new workflow with those from the original to make sure we've done it right.  We use functions from the tbeptools package to estimate creek scores, then compare in a matrix. 
+Finally, we want to compare the results from the new workflow with those from the original to make sure we've done it right.  We use functions from the tbeptools package to estimate creek scores, then compare in a matrix (this returns the same since tbeptools has already been updatd with IWR run 64).
 
 ```{r}
 library(tbeptools)
 
 # get new estimates
-tmpnew <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2021)
+tmpnew <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2022)
 
 # get old estimates
 data(tidalcreeks)
 data(iwrraw)
-tmpold <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2021)
+tmpold <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2022)
 
 # compare
 tmpnewcmp <- tmpnew %>% 
