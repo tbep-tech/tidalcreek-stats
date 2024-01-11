@@ -11,11 +11,11 @@
 
 <meta name="author" content="M. W. Beck" />
 
-<meta name="date" content="2023-03-29" />
+<meta name="date" content="2024-01-11" />
 
 <title>Creek Select for tbeptools</title>
 
-<script src="site_libs/header-attrs-2.21/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.25/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -264,7 +264,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Creek Select for tbeptools</h1>
 <h4 class="author">M. W. Beck</h4>
-<h4 class="date">2023-03-29</h4>
+<h4 class="date">2024-01-11</h4>
 
 </div>
 
@@ -272,9 +272,11 @@ $(document).ready(function () {
 <pre class="r"><code>knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
 library(sf)
-library(RODBC)
-library(dplyr)
-library(here)</code></pre>
+library(RODBC)</code></pre>
+<pre><code>## Warning: package &#39;RODBC&#39; was built under R version 4.3.2</code></pre>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 4.3.2</code></pre>
+<pre class="r"><code>library(here)</code></pre>
 <p>This workflow was developed as a test case for updating data used to
 estimate tidal creek assessment cateogires using FLDEP IWR run data. In
 this example, we use IWR Run 64, but in theory it should work with any
@@ -313,11 +315,14 @@ wbid &lt;- st_read(&#39;https://ca.dep.state.fl.us/arcgis/rest/services/OpenData
   st_transform(crs = st_crs(tdlcrk))</code></pre>
 <p>Now we import the IWR run data for the entire state using an ODBC
 connection to the extracted folder. The following code just iterates
-through the approac <code>.accdb</code> files in the extrated folders,
+through the <code>.accdb</code> files in the extracted folders,
 retrieves the data within a ten year window from the current run, and
-pulls out parameters of interest. This is done in a loop using a SQL. It
-only takes a few minutes to run and does not eat up a lot of memory.</p>
-<pre class="r"><code># this retrieves most recent ten years of iwr data (excluding incomplete current year)
+pulls out parameters of interest. Note that 11 years are subset based on
+the current year. This is done to accommodate IWR runs where incomplete
+data are present for the current year. This is done in a loop using a
+SQL. It only takes a few minutes to run and does not eat up a lot of
+memory.</p>
+<pre class="r"><code># this retrieves most recent ten years of iwr data, including the current year and ten years prior
 # filters only parameters in mcode below
 # used ODBC connect to access file
 # entire state
@@ -338,7 +343,7 @@ mcode &lt;- c(&quot;CHLAC&quot;,&quot;COLOR&quot;,&quot;COND&quot;,&quot;DO&quot
 qry_fun &lt;- function(tab, curyr){
   
   out &lt;- paste0(&quot;select sta, year, month, day, masterCode, result, rCode from &quot;, tab, &quot; where year &gt; &quot;, curyr - 11, 
-                &quot; and year &lt; &quot;, curyr, 
+                &quot; and year &lt;= &quot;, curyr, 
                &quot; and (&quot;, mcode, &quot;)&quot;
                )
   return(out)
@@ -381,7 +386,8 @@ for(db in dbs){
 <p>Now we need to get station lat/lon data for intersection with the
 tidal creek line layer. This is for the entire state and is retrieved
 from an ODBC connection to the extracted folder.</p>
-<pre class="r"><code># # from geojson for run61
+<pre class="r"><code># from geojson for run64
+# https://geodata.dep.state.fl.us/datasets/FDEP::impaired-waters-rule-iwr-stations/about
 staraw &lt;- st_read(&#39;https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/IMPAIRED_WATERS/MapServer/1/query?outFields=*&amp;where=1%3D1&amp;f=geojson&#39;, quiet = T)
 stas &lt;- staraw %&gt;% 
   filter(STATION_ID %in% iwr$sta) %&gt;% 
@@ -541,10 +547,10 @@ cmp &lt;- full_join(tmpnewcmp, tmpoldcmp, by = c(&#39;wbid&#39;, &#39;JEI&#39;, 
 table(cmp[, c(&#39;scorenew&#39;, &#39;scoreold&#39;)])</code></pre>
 <pre><code>##              scoreold
 ## scorenew      Caution Investigate Monitor No Data Prioritize
-##   Caution          18           0       0       0          0
-##   Investigate       0          28       0       0          0
-##   Monitor           0           0     141       0          0
-##   No Data           0           0       0     405          0
+##   Caution          20           0       0       0          0
+##   Investigate       0          19       0       0          0
+##   Monitor           0           0     150       0          0
+##   No Data           0           0       0     403          0
 ##   Prioritize        0           0       0       0         23</code></pre>
 
 

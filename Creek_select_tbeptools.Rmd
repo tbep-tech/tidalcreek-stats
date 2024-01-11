@@ -40,10 +40,10 @@ wbid <- st_read('https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/WBIDS/
   st_transform(crs = st_crs(tdlcrk))
 ```
 
-Now we import the IWR run data for the entire state using an ODBC connection to the extracted folder.  The following code just iterates through the approac `.accdb` files in the extrated folders, retrieves the data within a ten year window from the current run, and pulls out parameters of interest.  This is done in a loop using a SQL. It only takes a few minutes to run and does not eat up a lot of memory.
+Now we import the IWR run data for the entire state using an ODBC connection to the extracted folder.  The following code just iterates through the `.accdb` files in the extracted folders, retrieves the data within a ten year window from the current run, and pulls out parameters of interest.  Note that 11 years are subset based on the current year.  This is done to accommodate IWR runs where incomplete data are present for the current year. This is done in a loop using a SQL. It only takes a few minutes to run and does not eat up a lot of memory.
 
 ```{r}
-# this retrieves most recent ten years of iwr data (excluding incomplete current year)
+# this retrieves most recent ten years of iwr data, including the current year and ten years prior
 # filters only parameters in mcode below
 # used ODBC connect to access file
 # entire state
@@ -64,7 +64,7 @@ mcode <- c("CHLAC","COLOR","COND","DO","DOSAT","NO3O2","ORGN","SALIN","TKN","TN"
 qry_fun <- function(tab, curyr){
   
   out <- paste0("select sta, year, month, day, masterCode, result, rCode from ", tab, " where year > ", curyr - 11, 
-                " and year < ", curyr, 
+                " and year <= ", curyr, 
                " and (", mcode, ")"
                )
   return(out)
@@ -99,7 +99,8 @@ head(iwr)
 Now we need to get station lat/lon data for intersection with the tidal creek line layer.  This is for the entire state and is retrieved from an ODBC connection to the extracted folder.
 
 ```{r}
-# # from geojson for run61
+# from geojson for run64
+# https://geodata.dep.state.fl.us/datasets/FDEP::impaired-waters-rule-iwr-stations/about
 staraw <- st_read('https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/IMPAIRED_WATERS/MapServer/1/query?outFields=*&where=1%3D1&f=geojson', quiet = T)
 stas <- staraw %>% 
   filter(STATION_ID %in% iwr$sta) %>% 
