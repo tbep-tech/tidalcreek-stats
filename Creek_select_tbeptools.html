@@ -11,11 +11,11 @@
 
 <meta name="author" content="M. W. Beck" />
 
-<meta name="date" content="2024-01-11" />
+<meta name="date" content="2024-03-20" />
 
 <title>Creek Select for tbeptools</title>
 
-<script src="site_libs/header-attrs-2.25/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.26/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -264,7 +264,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Creek Select for tbeptools</h1>
 <h4 class="author">M. W. Beck</h4>
-<h4 class="date">2024-01-11</h4>
+<h4 class="date">2024-03-20</h4>
 
 </div>
 
@@ -279,7 +279,7 @@ library(RODBC)</code></pre>
 <pre class="r"><code>library(here)</code></pre>
 <p>This workflow was developed as a test case for updating data used to
 estimate tidal creek assessment cateogires using FLDEP IWR run data. In
-this example, we use IWR Run 64, but in theory it should work with any
+this example, we use IWR Run 65, but in theory it should work with any
 IWR run. The only requirements are:</p>
 <ul>
 <li>Install the R package dependencies above</li>
@@ -293,14 +293,14 @@ href="https://tbep-tech.github.io/tidalcreek-stats/">repository</a>).</li>
 retrieved through web services (<a
 href="https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about"
 class="uri">https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about</a>.
-The Run64 WBID shapefiles are also available from the folder here: <a
+The Run65 WBID shapefiles are also available from the folder here: <a
 href="http://publicfiles.dep.state.fl.us/dear/kristin/"
 class="uri">http://publicfiles.dep.state.fl.us/dear/kristin/</a>.</li>
 </ul>
 <p>Below we set a path to the extracted location for the IWR database,
-load the tidal creek line file, and load the wbid polygone fil.</p>
+load the tidal creek line file, and load the wbid polygon file.</p>
 <pre class="r"><code># set database path
-pth &lt;- &quot;~/Desktop/iwr2022_run64_2022-11-29/&quot;
+pth &lt;- &quot;~/Desktop/iwr2024_run65_2024-01-30/&quot;
 
 # # to explore
 # con &lt;- odbcConnectAccess2007(&#39;C:/Users/mbeck/Desktop/iwr2021_run61_2021-05-27/iwr_run61_05272021.accdb&#39;)
@@ -310,7 +310,7 @@ pth &lt;- &quot;~/Desktop/iwr2022_run64_2022-11-29/&quot;
 # source creek line file
 tdlcrk &lt;- st_read(here(&#39;shapes/TidalCreek_ALL_Line.shp&#39;), quiet = T)
 
-# wbid data, run 64 
+# wbid data, run 65 (url should not change betweem runs)
 wbid &lt;- st_read(&#39;https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/WBIDS/MapServer/0/query?outFields=*&amp;where=1%3D1&amp;f=geojson&#39;, quiet = T) %&gt;% 
   st_transform(crs = st_crs(tdlcrk))</code></pre>
 <p>Now we import the IWR run data for the entire state using an ODBC
@@ -331,10 +331,7 @@ memory.</p>
 dbs &lt;- list.files(pth, pattern = &#39;rawDataDB.*\\.accdb$&#39;, full.names = T)
 
 # the current year of interest, used to build the query for ten prior years
-curyr &lt;- gsub(&#39;^.*\\_&#39;, &#39;&#39;, pth) %&gt;% 
-  as.Date %&gt;% 
-  strftime(&#39;%Y&#39;) %&gt;% 
-  as.numeric
+curyr &lt;- 2023
 
 # query building tools
 mcode &lt;- c(&quot;CHLAC&quot;,&quot;COLOR&quot;,&quot;COND&quot;,&quot;DO&quot;,&quot;DOSAT&quot;,&quot;NO3O2&quot;,&quot;ORGN&quot;,&quot;SALIN&quot;,&quot;TKN&quot;,&quot;TN&quot;,&quot;TP&quot;,&quot;TSS&quot;,&quot;TURB&quot;) %&gt;% 
@@ -386,7 +383,7 @@ for(db in dbs){
 <p>Now we need to get station lat/lon data for intersection with the
 tidal creek line layer. This is for the entire state and is retrieved
 from an ODBC connection to the extracted folder.</p>
-<pre class="r"><code># from geojson for run64
+<pre class="r"><code># from geojson for run65
 # https://geodata.dep.state.fl.us/datasets/FDEP::impaired-waters-rule-iwr-stations/about
 staraw &lt;- st_read(&#39;https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/IMPAIRED_WATERS/MapServer/1/query?outFields=*&amp;where=1%3D1&amp;f=geojson&#39;, quiet = T)
 stas &lt;- staraw %&gt;% 
@@ -405,43 +402,36 @@ head(stas)</code></pre>
 <pre><code>## Simple feature collection with 6 features and 13 fields
 ## Geometry type: POINT
 ## Dimension:     XY
-## Bounding box:  xmin: 397550 ymin: 3066948 xmax: 522199.8 ymax: 3232253
+## Bounding box:  xmin: 182215.4 ymin: 3346961 xmax: 186005.4 ymax: 3349716
 ## Projected CRS: NAD83 / UTM zone 17N
-##   OBJECTID        STATION_ID                                     STATION_NAME
-## 1      950  112WRD  02231400             BLUE CYPRESS LAKE NR FELLSMERE, FLA.
-## 2     1136  112WRD  02239500                    SILVER SPRINGS NEAR OCALA, FL
-## 3     1137  112WRD  02239501                      SILVER RIVER NEAR OCALA, FL
-## 4     1210  112WRD  02234600                   WEKIWA SPRINGS NEAR APOPKA, FL
-## 5     1211  112WRD  02234610                     ROCK SPRINGS NEAR APOPKA, FL
-## 6     1228 112WRD  022349993 WEKIVA RIVER AT OLD RR CROSSING NEAR SANFORD, FL
-##   WATERBODY_ID
-## 1        2893V
-## 2        2772A
-## 3        2772C
-## 4        2956C
-## 5         2967
-## 6        2956A
-##                                                                                                                                                                                                    COMMENTS
-## 1                                                                                                                                            Lat/Longs updated based on values from USGS, Run 58 - R.Stuart
-## 2                                                                                 Changed by j. Paulsen Spring WBID edits; by J Hand 3/2009; Lat/Longs updated based on values from USGS, Run 58 - R.Stuart
-## 3                                                                                 Changed by j. Paulsen Spring WBID edits; by J Hand 3/2009; Lat/Longs updated based on values from USGS, Run 58 - R.Stuart
-## 4                                                                                                                                            Lat/Longs updated based on values from USGS, Run 58 - R.Stuart
-## 5 Reassigned from 2967 to 2967A, Run 50 - J.Albright; Reassigned from 2967A to 2967, Run 50 - J.Albright; Lat/Longs updated based on values from USGS, Run 58 - R.StuartLat/long updated, Run 63 - R.Stuart
-## 6                                                                                                                                            Lat/Longs updated based on values from USGS, Run 58 - R.Stuart
+##   OBJECTID    STATION_ID  STATION_NAME WATERBODY_ID
+## 1        1 21FLFSI WAK-5         WAK-5         1006
+## 2        2 21FLFSI WAK-6         WAK-6         1006
+## 3        3 21FLFSI WAK-7         WAK-7         1006
+## 4        4 21FLFSI WAK-8         WAK-8         1006
+## 5        6 21FLGW  34879 WAKULLA RIVER         1006
+## 6        7 21FLGW  44059 WAKULLA RIVER         1006
+##                                                                                                       COMMENTS
+## 1                                                              New station assigned to 1006, Run 61 - P.Homann
+## 2                                                              New station assigned to 1006, Run 58 - R.Stuart
+## 3                                                              New station assigned to 1006, Run 58 - R.Stuart
+## 4                                                              New station assigned to 1006, Run 58 - R.Stuart
+## 5                               J Hand March 2009; Lat/Longs updated based on values in WIN, Run 58 - R.Stuart
+## 6 New Station assigned to 1006, Run 49 - P.Homann; Lat/Longs updated based on values in WIN, Run 58 - R.Stuart
 ##   LATITUDE LONGITUDE RESULT_COUNT BEGIN_DATE END_DATE TMDL_RUN
-## 1 27.72670 -80.77478          979       1966     2021     &lt;NA&gt;
-## 2 29.21248 -82.05398         5315       1906     2013     &lt;NA&gt;
-## 3 29.21498 -82.04120          262       1968     2022   Run 36
-## 4 28.71222 -81.45979         2436       1932     2022     &lt;NA&gt;
-## 5 28.75757 -81.49684         1465       1931     2022     &lt;NA&gt;
-## 6 28.79277 -81.41340          237       2015     2015     &lt;NA&gt;
+## 1 30.23421 -84.29015           24       2019     2020   Run 61
+## 2 30.23756 -84.29922           28       2019     2020   Run 58
+## 3 30.23583 -84.30182           33       2019     2020   Run 58
+## 4 30.23664 -84.30181           27       2019     2020   Run 58
+## 5 30.21365 -84.26173         6591       2008     2022     &lt;NA&gt;
+## 6 30.23458 -84.29448          339       2013     2017   Run 49
 ##   WATER_QUALITY_STATION BIOLOGY_STATION                 geometry
-## 1                     1               0 POINT (522199.8 3066948)
-## 2                     1               0   POINT (397550 3231987)
-## 3                     1               0 POINT (398794.8 3232253)
-## 4                     1               0 POINT (455092.7 3176189)
-## 5                     1               0   POINT (451495 3181228)
-## 6                     1               0 POINT (459654.6 3185097)</code></pre>
+## 1                     1               0   POINT (183334 3349320)
+## 2                     1               0 POINT (182471.4 3349716)
+## 3                     1               0 POINT (182215.4 3349532)
+## 4                     1               0   POINT (182219 3349622)
+## 5                     1               1 POINT (186005.4 3346961)
+## 6                     1               1 POINT (182918.3 3349373)</code></pre>
 <p>The next step is to create a polyline file that is similar to the
 source file, but includes an intersection with the WBID layer. It also
 includes creek ID (JEI), class, and creek length (total across WBIDs).
@@ -500,7 +490,7 @@ iwrraw &lt;- st_buffer(tdlcrk, dist = 200, endCapStyle = &#39;FLAT&#39;) %&gt;%
   st_intersection(stas, .) %&gt;% 
   select(sta = STATION_ID, wbid = WATERBODY_ID, JEI = CreekID) %&gt;% 
   st_set_geometry(NULL) %&gt;% 
-  inner_join(., iwr, by = &#39;sta&#39;) %&gt;% 
+  inner_join(., iwr, by = &#39;sta&#39;, relationship = &#39;many-to-many&#39;) %&gt;% 
   mutate(
     newComment = rCode
   ) %&gt;% 
@@ -508,12 +498,12 @@ iwrraw &lt;- st_buffer(tdlcrk, dist = 200, endCapStyle = &#39;FLAT&#39;) %&gt;%
 
 head(iwrraw)</code></pre>
 <pre><code>##              sta wbid  JEI year month day masterCode result rCode newComment
-## 1 21FLCHARLBANG1 2052 CC01 2012     6   4      CHLAC  2.500  &lt;NA&gt;       &lt;NA&gt;
-## 2 21FLCHARLBANG1 2052 CC01 2012     6   4      COLOR 10.000  &lt;NA&gt;       &lt;NA&gt;
-## 3 21FLCHARLBANG1 2052 CC01 2012     6   4         DO  2.500     J          J
-## 4 21FLCHARLBANG1 2052 CC01 2012     6   4      DOSAT 38.500     +          +
-## 5 21FLCHARLBANG1 2052 CC01 2012     6   4      NO3O2  0.004     U          U
-## 6 21FLCHARLBANG1 2052 CC01 2012     6   4      SALIN 35.600  &lt;NA&gt;       &lt;NA&gt;
+## 1 21FLCHARLBANG1 2052 CC01 2013     2   4      CHLAC  0.990     I          I
+## 2 21FLCHARLBANG1 2052 CC01 2013     2   4      COLOR  2.500     U          U
+## 3 21FLCHARLBANG1 2052 CC01 2013     2   4         DO  3.600     J          J
+## 4 21FLCHARLBANG1 2052 CC01 2013     2   4      DOSAT 45.000     +          +
+## 5 21FLCHARLBANG1 2052 CC01 2013     2   4      NO3O2  0.012  &lt;NA&gt;       &lt;NA&gt;
+## 6 21FLCHARLBANG1 2052 CC01 2013     2   4      SALIN 33.400  &lt;NA&gt;       &lt;NA&gt;
 ##   class
 ## 1    3M
 ## 2    3M
@@ -521,15 +511,14 @@ head(iwrraw)</code></pre>
 ## 4    3M
 ## 5    3M
 ## 6    3M</code></pre>
-<p>Finally, we want to compare the results from the new workflow with
-those from the original to make sure we’ve done it right. We use
+<p>Finally, we want to compare the results from the previous year’s run
+with the new results to see how the scores have changed. We use
 functions from the tbeptools package to estimate creek scores, then
-compare in a matrix (this returns the same since tbeptools has already
-been updatd with IWR run 64).</p>
+compare in a matrix.</p>
 <pre class="r"><code>library(tbeptools)
 
 # get new estimates
-tmpnew &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2022)
+tmpnew &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2023)
 
 # get old estimates
 data(tidalcreeks)
@@ -547,11 +536,11 @@ cmp &lt;- full_join(tmpnewcmp, tmpoldcmp, by = c(&#39;wbid&#39;, &#39;JEI&#39;, 
 table(cmp[, c(&#39;scorenew&#39;, &#39;scoreold&#39;)])</code></pre>
 <pre><code>##              scoreold
 ## scorenew      Caution Investigate Monitor No Data Prioritize
-##   Caution          20           0       0       0          0
-##   Investigate       0          19       0       0          0
-##   Monitor           0           0     150       0          0
-##   No Data           0           0       0     403          0
-##   Prioritize        0           0       0       0         23</code></pre>
+##   Caution          16           1       0       0          0
+##   Investigate       2          14       0       0          0
+##   Monitor           2           2     141       4          1
+##   No Data           0           1       5     399          0
+##   Prioritize        0           0       2       0         22</code></pre>
 
 
 
