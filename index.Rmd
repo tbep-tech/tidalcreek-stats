@@ -20,6 +20,11 @@ library(here)
 # Background
 This page is established to provide information on updates to the SW FL Tidal Creeks dashboard [dashboard](https://shiny.tbep.org/tidalcreek-dash/?_ga=2.9967863.311877574.1624202665-1007913767.1624202665#section-overview){target="_blank"} as well as areas of current research and future direction (see additional resources tab), conveniently accessed in one location. This page will be continually updated using open science principals as new analyses are conducted and new features are incorporated into the dashboard.
 
+### 3/20/24
+### IWR Run65 Updates
+
+The [dashboard](https://shiny.tbep.org/tidalcreek-dash/?_ga=2.9967863.311877574.1624202665-1007913767.1624202665#section-overview){target="_blank"} has been updated using IWR Run 65 water quality data, as has the [tbeptools](https://tbep-tech.github.io){target="_blank"} R package that the dashboard uses. The data updates follow a workflow outlined on [this page](https://tbep-tech.github.io/tidalcreek-stats/Creek_select_tbeptools). 
+
 ### 3/29/23
 ### IWR Run64 Updates
 
@@ -31,7 +36,7 @@ The [dashboard](https://shiny.tbep.org/tidalcreek-dash/?_ga=2.9967863.311877574.
 The Florida department of Environmental Protection IWR Run 61 water quality database became available on May 27 2021 and this run has now been integrated into the dashboard. Each IWR run produces a new WBID and Station list which must be intersected with the creek line file to obtain the dataset from which the dashboard analysis is conducted. As with the last iteration, the intersection of WBID boundaries in combination with the creek line file and 200 meter buffer can sometimes result in sites in more open estuary locations being assigned to a creek. An example in the figure below shows a site in Billy Creek that lands in the more open system WBID 3240B instead of the creek WBID 3240J(1-4) even though it remains within the creek. Given the large population of creeks, this outcome is accepted if the STA lies within the buffer and the report card outcomes are now reported by JEI and WBID with the polyline file segmented by WBID to allow for representation of all occurrences for further evaluation as a post hoc analysis. A new "flat buffer" technique has been incorporated into this iteration of the dashboard. The flat buffer does not extend the buffer at either end of the line file to minimize the occurrence of more open system data being incorporated into the creek however this should still be considered in the post hoc evalaution 
 
 ```{r, echo = F, out.width = '65%', fig.align = 'center'}
-knitr::include_graphics('BillyCreek.PNG')
+knitr::include_graphics('BillyCreek.png')
 ```
 
 An interactive map of the Run 61 data used for the current dashboard application is provided below which can be used to highlight either the creek identifier (JEI), the WBID, or any water quality stations that fell within the 200meter buffer of the creek polyline (STA) over the last 10 years by hovering over the area of interest. This exploratory tool is an additional new feature to aid in understanding what data were used in the dashboard evaluation.

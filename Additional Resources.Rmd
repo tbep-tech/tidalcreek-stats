@@ -42,3 +42,7 @@ This workflow describes how to extract IWR data for new runs to update data used
 1. Run [R/dat_proc.R](https://github.com/tbep-tech/tidalcreek-dash/blob/master/R/dat_proc.R){target="_blank"} in the tidalcreeks dashboard repo after installing new version of tbeptools
 1. Push updated tidalcreeks repo to GitHub, pull to TBEP shiny server
 1. Update server image with new version of tbeptools
+
+### [Trends Assessment](https://tbep-tech.github.io/tidalcreek-stats/creek_trends){target="_blank"})
+
+Quick evaluation of trends over time in southwest Florida tidal creek scores. 

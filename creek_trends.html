@@ -9,10 +9,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Mwessel" />
+<meta name="author" content="M. W. Beck" />
 
+<meta name="date" content="2024-03-20" />
 
-<title>Additional Resources</title>
+<title>Tidal creek trends</title>
 
 <script src="site_libs/header-attrs-2.26/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -31,6 +32,7 @@
        code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
        pre:not([class]) { background-color: white }</style>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 
@@ -217,6 +219,9 @@ $(document).ready(function () {
 </style>
 
 <!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
 
 
 
@@ -259,121 +264,99 @@ $(document).ready(function () {
 
 <div id="header">
 
-
-
-<h1 class="title toc-ignore">Additional Resources</h1>
-<h4 class="author">Mwessel</h4>
-<h4 class="date">7/8/2021</h4>
-
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
 </div>
 
 
-<div id="background" class="section level1">
-<h1>Background</h1>
-<p>This page provides additional information on details used in
-construction of the tidal creeks dashboard as well as summaries of
-various aspects of analysis conducted to identify management tools
-related to evaluating tidal creek condition. These links will be updates
-as additional analysis is conducted and additional features are added to
-the dashboard.</p>
-<div id="creek-length-adjustment" class="section level3">
-<h3><a
-href="https://tbep-tech.github.io/tidalcreek-stats/docs/CreekLength.pdf"
-target="_blank">Creek Length Adjustment</a></h3>
-<p>This link details the assessment of creek length as a metric to
-develop the Caution level criteria. This is an area of current research.
-The original regression relationship was statistically significant and
-was supported by other analysis suggesting that creek length was a
-contributing factor explaining variation in nutrient concentrations in
-these creeks.However, the relationships were somewhat weak. Over time,
-stakeholders should continue to evaluate the utility of the creek length
-adjustment relative to simply using the TN indicator threshold value of
-1.1 mg/l annual geometric mean as a threshold for the Caution level.
-Assessing these results over time and comparing the relative accuracy of
-these metrics against other indicators will improve the reliability of
-the Caution level for defining creeks that may be trending towards an
-undesirable condition.</p>
+
+<h1 class="title toc-ignore">Tidal creek trends</h1>
+<h4 class="author">M. W. Beck</h4>
+<h4 class="date">2024-03-20</h4>
+
 </div>
-<div id="monte-carlo-assessment" class="section level3">
-<h3><a href="https://tbep-tech.github.io/tidalcreek-stats/docs/MCMC.pdf"
-target="_blank">Monte Carlo Assessment</a></h3>
-<p>This link provides code to replicate the monte carlo analysis used to
-identify the “Investigate” criteria for the WQAF. The code is written in
-Statistical Analysis Systems (SAS) software but should be easily
-transferable to R software though results may differ slightly due to
-differences in the random seed algorithms. The results defined by this
-analysis are those currently used in the dashboard and as reported in
-Wessel et al. 2021 which differ slightly from that initially reported in
-Janicki and Mote (2016 and 2019) as the computer coding methods were
-refined over time.</p>
-</div>
-<div id="dissolved-oxygen-assesment" class="section level3">
-<h3><a
-href="https://tbep-tech.github.io/tidalcreek-stats/docs/DOEval.pdf"
-target="_blank">Dissolved Oxygen Assesment</a></h3>
-<p>This pdf is an excerpt from the 2016 tidal creek study that describes
-an evaluation into the current and potential alternative DO criteria for
-southwest Florida tidal creeks. it is an area of research that warrants
-further investigation as an indicator of tidal creek condition.</p>
-</div>
-<div id="dilution-along-the-salinity-gradient" class="section level3">
-<h3><a
-href="https://tbep-tech.github.io/tidalcreek-stats/docs/Dilution.pdf"
-target="_blank">Dilution Along the Salinity Gradient</a></h3>
-<p>This pdf is an excerpt from the 2019 tidal creek study that describes
-an evaluation of dilution of nutrient concentrations along the salinity
-gradient. The analysis tested the conceptual model that dilution is
-linear and found organic nitrogen to be in supply relative to the linear
-dilution assumption while inorganic nitrogen was rapidly assimilated
-along the salinity gradient. This has implications for developing
-nutrient criteria for tidal creeks using conservative assumptions
-regarding nutrients as well as the role of natural emergent vegetation
-(e.g. mangroves) and decomposition of allochthonous material as a
-natural source of organic nitrogen in addition to inputs from
-anthropogenic sources.</p>
-</div>
-<div id="advancing-tidal-creeks-research" class="section level3">
-<h3><a
-href="https://tbep-tech.github.io/tidalcreek-stats/docs/Future.pdf"
-target="_blank">Advancing Tidal Creeks Research</a></h3>
-<p>This excerpt is from the 2016 report describing areas to advance
-future tidal creek research including the need for additional methods to
-characterize the role of benthic algal productivity, the role of
-emergent wetland vegetation, and the case for urbanization resulting in
-decreased productivity in these creeks.Hopefully, the dashboard tool and
-water quality assessment framework provide a foundation from which to
-better understand the role of physical and biological interactions with
-observed water quality in these systems.</p>
-</div>
-<div id="update-iwr-data-for-dashboard-and-tbeptools"
-class="section level3">
-<h3><a
-href="https://tbep-tech.github.io/tidalcreek-stats/Creek_select_tbeptools"
-target="_blank">Update IWR data for dashboard and tbeptools</a></h3>
-<p>This workflow describes how to extract IWR data for new runs to
-update data used in the tidal creeks dashboard and tbeptools. Note that
-additional steps are needed that can only be conducted by TBEP. The
-general workflow is as follows:</p>
-<ol style="list-style-type: decimal">
-<li>Run the access workflow from the above link</li>
-<li>Save the iwrraw and tidalcreeks RData objects to tbeptools (and
-update a bunch of stuff in tbeptools)</li>
-<li>Run <a
-href="https://github.com/tbep-tech/tidalcreek-dash/blob/master/R/dat_proc.R"
-target="_blank">R/dat_proc.R</a> in the tidalcreeks dashboard repo after
-installing new version of tbeptools</li>
-<li>Push updated tidalcreeks repo to GitHub, pull to TBEP shiny
-server</li>
-<li>Update server image with new version of tbeptools</li>
-</ol>
-</div>
-<div id="trends-assessment" class="section level3">
-<h3><a href="https://tbep-tech.github.io/tidalcreek-stats/creek_trends"
-target="_blank">Trends Assessment</a>)</h3>
-<p>Quick evaluation of trends over time in southwest Florida tidal creek
-scores.</p>
-</div>
-</div>
+
+
+<p>This document provides a quick summary of trends in southwest Florida
+tidal creek scores. Functions in the <a
+href="https://tbep-tech.github.io/tbeptools/"
+target="_blank">tbeptools</a> R package are used to create the
+assessment.</p>
+<pre class="r"><code>library(tidyverse)
+library(patchwork)
+library(tbeptools)
+
+trnds &lt;- tibble(
+    yrs = 1975:2023,
+  ) |&gt; 
+  group_nest(yrs) |&gt; 
+  mutate(
+    data = purrr::map(yrs, function(x){
+      # cat(x, &#39;\t&#39;)
+      anlz_tdlcrk(tidalcreeks, iwrraw, yr = x)
+    }) 
+  )
+
+toplo &lt;- trnds |&gt; 
+  unnest(&#39;data&#39;) |&gt; 
+  summarise(
+    cnt = n(), 
+    .by = c(yrs, score)
+  ) 
+
+toplo1 &lt;- toplo |&gt; 
+  mutate(
+    score = factor(score, c(&#39;Monitor&#39;, &#39;Caution&#39;, &#39;Investigate&#39;, &#39;Prioritize&#39;, &#39;No Data&#39;))
+  )
+
+cols &lt;- list(Monitor = &#39;#2DC938&#39;, Caution = &#39;#E9C318&#39;, Investigate = &#39;#EE7600&#39;, Prioritize = &#39;#FF4040&#39;, `No Data` = &#39;#ADD8E6&#39;)
+
+p1 &lt;- ggplot(toplo1, aes(x = yrs, y = cnt, fill = score)) +
+  geom_col() +
+  scale_fill_manual(values = cols) +
+  scale_x_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme_minimal() +
+  theme(
+    legend.position = &#39;top&#39;, 
+    axis.text.x = element_blank()
+  ) + 
+  labs(
+    x = NULL,
+    fill = NULL,
+    title = &#39;Tidal Creek Trends&#39;,
+    y = &#39;Count&#39;
+  )
+
+toplo2 &lt;- toplo |&gt; 
+  filter(score != &#39;No Data&#39;) |&gt; 
+  mutate(
+    score = factor(score, c(&#39;Monitor&#39;, &#39;Caution&#39;, &#39;Investigate&#39;, &#39;Prioritize&#39;))
+  )
+
+cols &lt;- list(Monitor = &#39;#2DC938&#39;, Caution = &#39;#E9C318&#39;, Investigate = &#39;#EE7600&#39;, Prioritize = &#39;#FF4040&#39;)
+
+p2 &lt;- ggplot(toplo2, aes(x = yrs, y = cnt, fill = score)) +
+  geom_bar(stat = &#39;identity&#39;, position = &#39;fill&#39;, show.legend = F) +
+  scale_fill_manual(values = cols) +
+  scale_x_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme_minimal() +
+  labs(
+    x = NULL,
+    fill = NULL,
+    y = &#39;Proportion with data&#39;,
+    caption = &#39;Source: TBEP, Florida Department of Environmental Protection, Impaired Waters Rule, Run 65&#39;
+  )
+
+p &lt;- p1 + p2 + plot_layout(ncol = 1, guides = &#39;collect&#39;) &amp; theme(legend.position = &#39;top&#39;)
+
+p</code></pre>
+<p><img src="creek_trends_files/figure-html/setup-1.png" width="100%" style="display: block; margin: auto;" /></p>
 
 
 
@@ -408,6 +391,11 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
