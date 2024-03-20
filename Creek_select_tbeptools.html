@@ -272,11 +272,9 @@ $(document).ready(function () {
 <pre class="r"><code>knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
 library(sf)
-library(RODBC)</code></pre>
-<pre><code>## Warning: package &#39;RODBC&#39; was built under R version 4.3.2</code></pre>
-<pre class="r"><code>library(dplyr)</code></pre>
-<pre><code>## Warning: package &#39;dplyr&#39; was built under R version 4.3.2</code></pre>
-<pre class="r"><code>library(here)</code></pre>
+library(RODBC)
+library(dplyr)
+library(here)</code></pre>
 <p>This workflow was developed as a test case for updating data used to
 estimate tidal creek assessment cateogires using FLDEP IWR run data. In
 this example, we use IWR Run 65, but in theory it should work with any
@@ -339,8 +337,7 @@ mcode &lt;- c(&quot;CHLAC&quot;,&quot;COLOR&quot;,&quot;COND&quot;,&quot;DO&quot
   paste0(., collapse = &#39; or &#39;)
 qry_fun &lt;- function(tab, curyr){
   
-  out &lt;- paste0(&quot;select sta, year, month, day, masterCode, result, rCode from &quot;, tab, &quot; where year &gt; &quot;, curyr - 11, 
-                &quot; and year &lt;= &quot;, curyr, 
+  out &lt;- paste0(&quot;select sta, year, month, day, masterCode, result, rCode from &quot;, tab, &quot; where year &lt;= &quot;, curyr, 
                &quot; and (&quot;, mcode, &quot;)&quot;
                )
   return(out)
@@ -404,34 +401,34 @@ head(stas)</code></pre>
 ## Dimension:     XY
 ## Bounding box:  xmin: 182215.4 ymin: 3346961 xmax: 186005.4 ymax: 3349716
 ## Projected CRS: NAD83 / UTM zone 17N
-##   OBJECTID    STATION_ID  STATION_NAME WATERBODY_ID
-## 1        1 21FLFSI WAK-5         WAK-5         1006
-## 2        2 21FLFSI WAK-6         WAK-6         1006
-## 3        3 21FLFSI WAK-7         WAK-7         1006
-## 4        4 21FLFSI WAK-8         WAK-8         1006
-## 5        6 21FLGW  34879 WAKULLA RIVER         1006
-## 6        7 21FLGW  44059 WAKULLA RIVER         1006
-##                                                                                                       COMMENTS
-## 1                                                              New station assigned to 1006, Run 61 - P.Homann
-## 2                                                              New station assigned to 1006, Run 58 - R.Stuart
-## 3                                                              New station assigned to 1006, Run 58 - R.Stuart
-## 4                                                              New station assigned to 1006, Run 58 - R.Stuart
-## 5                               J Hand March 2009; Lat/Longs updated based on values in WIN, Run 58 - R.Stuart
-## 6 New Station assigned to 1006, Run 49 - P.Homann; Lat/Longs updated based on values in WIN, Run 58 - R.Stuart
+##   OBJECTID    STATION_ID              STATION_NAME WATERBODY_ID
+## 1        1 21FLFSI WAK-5                     WAK-5         1006
+## 2        2 21FLFSI WAK-6                     WAK-6         1006
+## 3        3 21FLFSI WAK-7                     WAK-7         1006
+## 4        4 21FLFSI WAK-8                     WAK-8         1006
+## 5        5 21FLGW  22848 NW1-LR-2034 WAKULLA RIVER         1006
+## 6        6 21FLGW  34879             WAKULLA RIVER         1006
+##                                                                         COMMENTS
+## 1                                New station assigned to 1006, Run 61 - P.Homann
+## 2                                New station assigned to 1006, Run 58 - R.Stuart
+## 3                                New station assigned to 1006, Run 58 - R.Stuart
+## 4                                New station assigned to 1006, Run 58 - R.Stuart
+## 5                                                      Joe Hand Run 22 9/13/2005
+## 6 J Hand March 2009; Lat/Longs updated based on values in WIN, Run 58 - R.Stuart
 ##   LATITUDE LONGITUDE RESULT_COUNT BEGIN_DATE END_DATE TMDL_RUN
 ## 1 30.23421 -84.29015           24       2019     2020   Run 61
 ## 2 30.23756 -84.29922           28       2019     2020   Run 58
 ## 3 30.23583 -84.30182           33       2019     2020   Run 58
 ## 4 30.23664 -84.30181           27       2019     2020   Run 58
-## 5 30.21365 -84.26173         6591       2008     2022     &lt;NA&gt;
-## 6 30.23458 -84.29448          339       2013     2017   Run 49
+## 5 30.22896 -84.28298           20       2004     2004     &lt;NA&gt;
+## 6 30.21365 -84.26173         6591       2008     2022     &lt;NA&gt;
 ##   WATER_QUALITY_STATION BIOLOGY_STATION                 geometry
 ## 1                     1               0   POINT (183334 3349320)
 ## 2                     1               0 POINT (182471.4 3349716)
 ## 3                     1               0 POINT (182215.4 3349532)
 ## 4                     1               0   POINT (182219 3349622)
-## 5                     1               1 POINT (186005.4 3346961)
-## 6                     1               1 POINT (182918.3 3349373)</code></pre>
+## 5                     1               1 POINT (184007.7 3348717)
+## 6                     1               1 POINT (186005.4 3346961)</code></pre>
 <p>The next step is to create a polyline file that is similar to the
 source file, but includes an intersection with the WBID layer. It also
 includes creek ID (JEI), class, and creek length (total across WBIDs).
@@ -497,20 +494,20 @@ iwrraw &lt;- st_buffer(tdlcrk, dist = 200, endCapStyle = &#39;FLAT&#39;) %&gt;%
   left_join(classadd, by = c(&#39;wbid&#39;))
 
 head(iwrraw)</code></pre>
-<pre><code>##              sta wbid  JEI year month day masterCode result rCode newComment
-## 1 21FLCHARLBANG1 2052 CC01 2013     2   4      CHLAC  0.990     I          I
-## 2 21FLCHARLBANG1 2052 CC01 2013     2   4      COLOR  2.500     U          U
-## 3 21FLCHARLBANG1 2052 CC01 2013     2   4         DO  3.600     J          J
-## 4 21FLCHARLBANG1 2052 CC01 2013     2   4      DOSAT 45.000     +          +
-## 5 21FLCHARLBANG1 2052 CC01 2013     2   4      NO3O2  0.012  &lt;NA&gt;       &lt;NA&gt;
-## 6 21FLCHARLBANG1 2052 CC01 2013     2   4      SALIN 33.400  &lt;NA&gt;       &lt;NA&gt;
+<pre><code>##              sta  wbid  JEI year month day masterCode  result rCode newComment
+## 1 21FLSWFD764483 1983B CC01 2009    12   1       COND 52000.0  &lt;NA&gt;       &lt;NA&gt;
+## 2 21FLSWFD764483 1983B CC01 2009    12   1         DO     8.2  &lt;NA&gt;       &lt;NA&gt;
+## 3 21FLSWFD764483 1983B CC01 2009    12   1      DOSAT   114.7     +          +
+## 4 21FLSWFD764483 1983B CC01 2009    12   1      SALIN    34.3  &lt;NA&gt;       &lt;NA&gt;
+## 5 21FLSWFD764483 1983B CC01 2009    12   1       COND 52200.0  &lt;NA&gt;       &lt;NA&gt;
+## 6 21FLSWFD764483 1983B CC01 2009    12   1         DO     8.3  &lt;NA&gt;       &lt;NA&gt;
 ##   class
-## 1    3M
-## 2    3M
-## 3    3M
-## 4    3M
-## 5    3M
-## 6    3M</code></pre>
+## 1     2
+## 2     2
+## 3     2
+## 4     2
+## 5     2
+## 6     2</code></pre>
 <p>Finally, we want to compare the results from the previous year’s run
 with the new results to see how the scores have changed. We use
 functions from the tbeptools package to estimate creek scores, then
@@ -521,8 +518,6 @@ compare in a matrix.</p>
 tmpnew &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2023)
 
 # get old estimates
-data(tidalcreeks)
-data(iwrraw)
 tmpold &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2022)
 
 # compare
@@ -531,16 +526,22 @@ tmpnewcmp &lt;- tmpnew %&gt;%
 
 tmpoldcmp &lt;- tmpold %&gt;% 
   select(wbid, JEI, class, scoreold = score)
-cmp &lt;- full_join(tmpnewcmp, tmpoldcmp, by = c(&#39;wbid&#39;, &#39;JEI&#39;, &#39;class&#39;))
+
+levs &lt;- c(&#39;No Data&#39;, &#39;Monitor&#39;, &#39;Caution&#39;, &#39;Investigate&#39;, &#39;Prioritize&#39;)
+cmp &lt;- full_join(tmpnewcmp, tmpoldcmp, by = c(&#39;wbid&#39;, &#39;JEI&#39;, &#39;class&#39;)) |&gt; 
+  mutate(
+    scorenew = factor(scorenew, levels = levs),
+    scoreold = factor(scoreold, levels = levs)
+  )
 
 table(cmp[, c(&#39;scorenew&#39;, &#39;scoreold&#39;)])</code></pre>
 <pre><code>##              scoreold
-## scorenew      Caution Investigate Monitor No Data Prioritize
-##   Caution          16           1       0       0          0
-##   Investigate       2          14       0       0          0
-##   Monitor           2           2     141       4          1
-##   No Data           0           1       5     399          0
-##   Prioritize        0           0       2       0         22</code></pre>
+## scorenew      No Data Monitor Caution Investigate Prioritize
+##   No Data         400       5       0           1          0
+##   Monitor           0     149       1           2          0
+##   Caution           0       0      16           1          0
+##   Investigate       0       0       2          14          0
+##   Prioritize        0       3       0           1         22</code></pre>
 
 
 

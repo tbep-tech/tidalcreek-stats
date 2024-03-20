@@ -5,13 +5,45 @@ date:  "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r setup, warnings = F, message = F}
+```{r setup, warning = F, message = F}
 knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
 library(sf)
 library(RODBC)
 library(dplyr)
 library(here)
+```
+
+```{r, include = F}
+# get rdata from github
+# try simple load, download if fail
+rdataload <- function(flurl){
+  
+  fl <- basename(flurl)
+  obj <- gsub('\\.RData$', '', fl)
+  
+  # try simple load
+  ld <- try(load(url(flurl)), silent = T)
+  
+  # return x if load worked
+  if(!inherits(ld, 'try-error')){
+    out <- get(obj)
+  }
+  
+  # download x if load failed
+  if(inherits(ld, 'try-error')){
+    
+    fl <- paste(tempdir(), fl, sep = '/')
+    download.file(flurl, destfile = fl, quiet = T)
+    load(file = fl)
+    out <- get(obj)
+    suppressMessages(file.remove(fl))
+    
+  }
+  
+  return(out)
+  
+}
 ```
 
 This workflow was developed as a test case for updating data used to estimate tidal creek assessment cateogires using FLDEP IWR run data.  In this example, we use IWR Run 65, but in theory it should work with any IWR run. The only requirements are:
@@ -60,8 +92,7 @@ mcode <- c("CHLAC","COLOR","COND","DO","DOSAT","NO3O2","ORGN","SALIN","TKN","TN"
   paste0(., collapse = ' or ')
 qry_fun <- function(tab, curyr){
   
-  out <- paste0("select sta, year, month, day, masterCode, result, rCode from ", tab, " where year > ", curyr - 11, 
-                " and year <= ", curyr, 
+  out <- paste0("select sta, year, month, day, masterCode, result, rCode from ", tab, " where year <= ", curyr, 
                " and (", mcode, ")"
                )
   return(out)
@@ -167,8 +198,6 @@ library(tbeptools)
 tmpnew <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2023)
 
 # get old estimates
-data(tidalcreeks)
-data(iwrraw)
 tmpold <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2022)
 
 # compare
@@ -177,7 +206,13 @@ tmpnewcmp <- tmpnew %>%
 
 tmpoldcmp <- tmpold %>% 
   select(wbid, JEI, class, scoreold = score)
-cmp <- full_join(tmpnewcmp, tmpoldcmp, by = c('wbid', 'JEI', 'class'))
+
+levs <- c('No Data', 'Monitor', 'Caution', 'Investigate', 'Prioritize')
+cmp <- full_join(tmpnewcmp, tmpoldcmp, by = c('wbid', 'JEI', 'class')) |> 
+  mutate(
+    scorenew = factor(scorenew, levels = levs),
+    scoreold = factor(scoreold, levels = levs)
+  )
 
 table(cmp[, c('scorenew', 'scoreold')])
 ```
