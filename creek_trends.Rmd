@@ -64,7 +64,7 @@ p1 <- plot_ly(data = toplo1, x = ~yrs, y = ~cnt, color = ~score,
 toplo2 <- toplo1 %>% 
   filter(score != 'No Data') %>% 
   mutate(, 
-    cnt = 100 * cnt / sum(cnt), 
+    cnt = cnt / sum(cnt), 
     .by = yrs
   )
 
@@ -80,9 +80,10 @@ p2 <- plot_ly() %>%
       zeroline = FALSE
     ),
     yaxis = list(
-      title = 'Proportion with data',
+      title = 'Percent with data',
       showgrid = TRUE,
-      zeroline = FALSE
+      zeroline = FALSE,
+      tickformat = ".0%"
     )
   )
 
