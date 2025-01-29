@@ -11,11 +11,11 @@
 
 <meta name="author" content="M. W. Beck" />
 
-<meta name="date" content="2024-03-20" />
+<meta name="date" content="2025-01-29" />
 
 <title>Creek Select for tbeptools</title>
 
-<script src="site_libs/header-attrs-2.26/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.29/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -264,7 +264,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Creek Select for tbeptools</h1>
 <h4 class="author">M. W. Beck</h4>
-<h4 class="date">2024-03-20</h4>
+<h4 class="date">2025-01-29</h4>
 
 </div>
 
@@ -275,10 +275,10 @@ library(sf)
 library(RODBC)
 library(dplyr)
 library(here)</code></pre>
-<p>This workflow was developed as a test case for updating data used to
-estimate tidal creek assessment cateogires using FLDEP IWR run data. In
-this example, we use IWR Run 65, but in theory it should work with any
-IWR run. The only requirements are:</p>
+<p>This workflow was developed to update data used to estimate tidal
+creek assessment categories using FLDEP IWR run data. In this example,
+we use IWR Run 66, but in theory it should work with any IWR run. The
+only requirements are:</p>
 <ul>
 <li>Install the R package dependencies above</li>
 <li>Download/extract the <code>.accdb</code> files for a selected run
@@ -293,12 +293,13 @@ href="https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about"
 class="uri">https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about</a>.
 The Run65 WBID shapefiles are also available from the folder here: <a
 href="http://publicfiles.dep.state.fl.us/dear/kristin/"
-class="uri">http://publicfiles.dep.state.fl.us/dear/kristin/</a>.</li>
+class="uri">http://publicfiles.dep.state.fl.us/dear/kristin/</a> (no
+need to download if using web services).</li>
 </ul>
 <p>Below we set a path to the extracted location for the IWR database,
 load the tidal creek line file, and load the wbid polygon file.</p>
 <pre class="r"><code># set database path
-pth &lt;- &quot;~/Desktop/iwr2024_run65_2024-01-30/&quot;
+pth &lt;- &quot;~/Desktop/iwr2024_run66_2024-11-15/&quot;
 
 # # to explore
 # con &lt;- odbcConnectAccess2007(&#39;C:/Users/mbeck/Desktop/iwr2021_run61_2021-05-27/iwr_run61_05272021.accdb&#39;)
@@ -308,7 +309,7 @@ pth &lt;- &quot;~/Desktop/iwr2024_run65_2024-01-30/&quot;
 # source creek line file
 tdlcrk &lt;- st_read(here(&#39;shapes/TidalCreek_ALL_Line.shp&#39;), quiet = T)
 
-# wbid data, run 65 (url should not change betweem runs)
+# wbid data, run 66 (url should not change between runs)
 wbid &lt;- st_read(&#39;https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/WBIDS/MapServer/0/query?outFields=*&amp;where=1%3D1&amp;f=geojson&#39;, quiet = T) %&gt;% 
   st_transform(crs = st_crs(tdlcrk))</code></pre>
 <p>Now we import the IWR run data for the entire state using an ODBC
@@ -318,8 +319,8 @@ retrieves the data within a ten year window from the current run, and
 pulls out parameters of interest. Note that 11 years are subset based on
 the current year. This is done to accommodate IWR runs where incomplete
 data are present for the current year. This is done in a loop using a
-SQL. It only takes a few minutes to run and does not eat up a lot of
-memory.</p>
+SQL request. It only takes a few minutes to run and does not use a lot
+of memory.</p>
 <pre class="r"><code># this retrieves most recent ten years of iwr data, including the current year and ten years prior
 # filters only parameters in mcode below
 # used ODBC connect to access file
@@ -329,7 +330,7 @@ memory.</p>
 dbs &lt;- list.files(pth, pattern = &#39;rawDataDB.*\\.accdb$&#39;, full.names = T)
 
 # the current year of interest, used to build the query for ten prior years
-curyr &lt;- 2023
+curyr &lt;- 2024
 
 # query building tools
 mcode &lt;- c(&quot;CHLAC&quot;,&quot;COLOR&quot;,&quot;COND&quot;,&quot;DO&quot;,&quot;DOSAT&quot;,&quot;NO3O2&quot;,&quot;ORGN&quot;,&quot;SALIN&quot;,&quot;TKN&quot;,&quot;TN&quot;,&quot;TP&quot;,&quot;TSS&quot;,&quot;TURB&quot;) %&gt;% 
@@ -399,42 +400,36 @@ head(stas)</code></pre>
 <pre><code>## Simple feature collection with 6 features and 13 fields
 ## Geometry type: POINT
 ## Dimension:     XY
-## Bounding box:  xmin: 182215.4 ymin: 3346961 xmax: 186005.4 ymax: 3349716
+## Bounding box:  xmin: 406216.7 ymin: 2939554 xmax: 408028.2 ymax: 2941086
 ## Projected CRS: NAD83 / UTM zone 17N
-##   OBJECTID    STATION_ID              STATION_NAME WATERBODY_ID
-## 1        1 21FLFSI WAK-5                     WAK-5         1006
-## 2        2 21FLFSI WAK-6                     WAK-6         1006
-## 3        3 21FLFSI WAK-7                     WAK-7         1006
-## 4        4 21FLFSI WAK-8                     WAK-8         1006
-## 5        5 21FLGW  22848 NW1-LR-2034 WAKULLA RIVER         1006
-## 6        6 21FLGW  34879             WAKULLA RIVER         1006
-##                                                                         COMMENTS
-## 1                                New station assigned to 1006, Run 61 - P.Homann
-## 2                                New station assigned to 1006, Run 58 - R.Stuart
-## 3                                New station assigned to 1006, Run 58 - R.Stuart
-## 4                                New station assigned to 1006, Run 58 - R.Stuart
-## 5                                                      Joe Hand Run 22 9/13/2005
-## 6 J Hand March 2009; Lat/Longs updated based on values in WIN, Run 58 - R.Stuart
-##   LATITUDE LONGITUDE RESULT_COUNT BEGIN_DATE END_DATE TMDL_RUN
-## 1 30.23421 -84.29015           24       2019     2020   Run 61
-## 2 30.23756 -84.29922           28       2019     2020   Run 58
-## 3 30.23583 -84.30182           33       2019     2020   Run 58
-## 4 30.23664 -84.30181           27       2019     2020   Run 58
-## 5 30.22896 -84.28298           20       2004     2004     &lt;NA&gt;
-## 6 30.21365 -84.26173         6591       2008     2022     &lt;NA&gt;
+##   OBJECTID     STATION_ID                     STATION_NAME WATERBODY_ID
+## 1        1 1113S000120310 CAPE CORAL -1500FT FRM CANAL MOU       3240A1
+## 2        2 1113S000120315 CAPE CORAL -1500FT FRM CANAL MOU        3240A
+## 3        3 1113S000120320       CAPE CORAL -AT CANAL MOUTH       3240A1
+## 4        4 1113S000120325 CAPE CORAL -4000FT FRM CANAL MOU       3240A1
+## 5        5 1113S000120330 CAPE CORAL -2500FT FRM CANAL MOU       3240A1
+## 6        6 1113S000120335 CAPE CORAL -3000FT FRM CANAL MOU       3240A1
+##           COMMENTS LATITUDE LONGITUDE RESULT_COUNT BEGIN_DATE END_DATE TMDL_RUN
+## 1 submitted by  PH  26.5875  -81.9319          150       1975     1975   Run 41
+## 2 submitted by  PH  26.5847  -81.9236          197       1975     1975   Run 41
+## 3 submitted by  PH  26.5847  -81.9278          208       1975     1975   Run 41
+## 4 submitted by  PH  26.5736  -81.9417           95       1975     1975   Run 41
+## 5 submitted by  PH  26.5764  -81.9417           93       1975     1975   Run 41
+## 6 submitted by  PH  26.5806  -81.9403          115       1975     1975   Run 41
 ##   WATER_QUALITY_STATION BIOLOGY_STATION                 geometry
-## 1                     1               0   POINT (183334 3349320)
-## 2                     1               0 POINT (182471.4 3349716)
-## 3                     1               0 POINT (182215.4 3349532)
-## 4                     1               0   POINT (182219 3349622)
-## 5                     1               1 POINT (184007.7 3348717)
-## 6                     1               1 POINT (186005.4 3346961)</code></pre>
+## 1                     1               0 POINT (407203.9 2941086)
+## 2                     1               0 POINT (408028.2 2940770)
+## 3                     1               0   POINT (407610 2940773)
+## 4                     1               0 POINT (406216.7 2939554)
+## 5                     1               0   POINT (406219 2939864)
+## 6                     1               0 POINT (406361.8 2940328)</code></pre>
 <p>The next step is to create a polyline file that is similar to the
 source file, but includes an intersection with the WBID layer. It also
 includes creek ID (JEI), class, and creek length (total across WBIDs).
 It is specific to southwest Florida. This reproduces the
 <code>tidalcreeks</code> sf data object in tbeptools for the current
-wBID.</p>
+wBIDs and must be saved to the <code>data</code> folder for the
+package.</p>
 <pre class="r"><code># create tidalcreeks polyline file with wbid, class, jei info -------------
 
 # intersect creek lines with wbids
@@ -449,6 +444,9 @@ tidalcreeks &lt;- st_intersection(tdlcrk, wbid) %&gt;%
 # fix rownames
 row.names(tidalcreeks) &lt;- 1:nrow(tidalcreeks)
 
+# save to Desktop for tbeptools data folder
+save(tidalcreeks, file = &#39;~/Desktop/tidalcreeks.RData&#39;, compress = &#39;xz&#39;)
+
 head(tidalcreeks)</code></pre>
 <pre><code>## Simple feature collection with 6 features and 6 fields
 ## Geometry type: GEOMETRY
@@ -461,7 +459,7 @@ head(tidalcreeks)</code></pre>
 ## 3  3 Oyster Creek CC02 1983B     2      10175.167
 ## 4  4 Oyster Creek CC02  2067    3M      10175.167
 ## 5  5   Buck Creek CC03 1983B     2       2251.188
-## 6  6   Buck Creek CC03  2068    3M       2251.188
+## 6  6   Buck Creek CC03 2068A    3M       2251.188
 ##                         geometry
 ## 1 LINESTRING (-82.33869 26.92...
 ## 2 MULTILINESTRING ((-82.33006...
@@ -472,9 +470,10 @@ head(tidalcreeks)</code></pre>
 <p>The final step is to extract the IWR station data at the state level
 to tidal creeks in southwest Florida. This is done by buffering the
 original creek line file (200m, flat ends), intersecting the buffered
-file with the station lat/lon file, and uisng an inner join by station.
+file with the station lat/lon file, and using an inner join by station.
 Finally, the WBID class is added. This is reproducing the
-<code>iwrraw</code> file from the tbeptools package.</p>
+<code>iwrraw</code> file for tbeptools and must be saved in the
+<code>data</code> folder for the package.</p>
 <pre class="r"><code># wbid classes from wbid, to join
 classadd &lt;- wbid %&gt;% 
   select(wbid = WBID, class= CLASS) %&gt;% 
@@ -493,21 +492,24 @@ iwrraw &lt;- st_buffer(tdlcrk, dist = 200, endCapStyle = &#39;FLAT&#39;) %&gt;%
   ) %&gt;% 
   left_join(classadd, by = c(&#39;wbid&#39;))
 
+# save to Desktop for tbeptools data folder
+save(iwrraw, file = &#39;~/Desktop/iwrraw.RData&#39;, compress = &#39;xz&#39;)
+
 head(iwrraw)</code></pre>
-<pre><code>##              sta  wbid  JEI year month day masterCode  result rCode newComment
-## 1 21FLSWFD764483 1983B CC01 2009    12   1       COND 52000.0  &lt;NA&gt;       &lt;NA&gt;
-## 2 21FLSWFD764483 1983B CC01 2009    12   1         DO     8.2  &lt;NA&gt;       &lt;NA&gt;
-## 3 21FLSWFD764483 1983B CC01 2009    12   1      DOSAT   114.7     +          +
-## 4 21FLSWFD764483 1983B CC01 2009    12   1      SALIN    34.3  &lt;NA&gt;       &lt;NA&gt;
-## 5 21FLSWFD764483 1983B CC01 2009    12   1       COND 52200.0  &lt;NA&gt;       &lt;NA&gt;
-## 6 21FLSWFD764483 1983B CC01 2009    12   1         DO     8.3  &lt;NA&gt;       &lt;NA&gt;
+<pre><code>##                sta wbid  JEI year month day masterCode  result rCode newComment
+## 1 21FLA   24010600 2052 CC01 1972    10   3      COLOR 15.0000  &lt;NA&gt;       &lt;NA&gt;
+## 2 21FLA   24010600 2052 CC01 1972    10   3         DO  4.0000  &lt;NA&gt;       &lt;NA&gt;
+## 3 21FLA   24010600 2052 CC01 1972    10   3      DOSAT 61.3873     $          $
+## 4 21FLA   24010600 2052 CC01 1972    10   3      NO3O2  0.0400     +          +
+## 5 21FLA   24010600 2052 CC01 1972    10   3       ORGN  0.2800  &lt;NA&gt;       &lt;NA&gt;
+## 6 21FLA   24010600 2052 CC01 1972    10   3      SALIN 29.0000  &lt;NA&gt;       &lt;NA&gt;
 ##   class
-## 1     2
-## 2     2
-## 3     2
-## 4     2
-## 5     2
-## 6     2</code></pre>
+## 1    3M
+## 2    3M
+## 3    3M
+## 4    3M
+## 5    3M
+## 6    3M</code></pre>
 <p>Finally, we want to compare the results from the previous year’s run
 with the new results to see how the scores have changed. We use
 functions from the tbeptools package to estimate creek scores, then
@@ -515,10 +517,10 @@ compare in a matrix.</p>
 <pre class="r"><code>library(tbeptools)
 
 # get new estimates
-tmpnew &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2023)
+tmpnew &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2024)
 
 # get old estimates
-tmpold &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2022)
+tmpold &lt;- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2023)
 
 # compare
 tmpnewcmp &lt;- tmpnew %&gt;% 
@@ -537,11 +539,11 @@ cmp &lt;- full_join(tmpnewcmp, tmpoldcmp, by = c(&#39;wbid&#39;, &#39;JEI&#39;, 
 table(cmp[, c(&#39;scorenew&#39;, &#39;scoreold&#39;)])</code></pre>
 <pre><code>##              scoreold
 ## scorenew      No Data Monitor Caution Investigate Prioritize
-##   No Data         400       5       0           1          0
-##   Monitor           0     149       1           2          0
-##   Caution           0       0      16           1          0
-##   Investigate       0       0       2          14          0
-##   Prioritize        0       3       0           1         22</code></pre>
+##   No Data         392       2       0           0          0
+##   Monitor           1     163       0           1          2
+##   Caution           0       1      16           0          0
+##   Investigate       0       0       1          18          1
+##   Prioritize        0       0       0           1         21</code></pre>
 
 
 

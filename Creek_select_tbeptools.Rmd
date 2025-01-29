@@ -46,18 +46,18 @@ rdataload <- function(flurl){
 }
 ```
 
-This workflow was developed as a test case for updating data used to estimate tidal creek assessment cateogires using FLDEP IWR run data.  In this example, we use IWR Run 65, but in theory it should work with any IWR run. The only requirements are:
+This workflow was developed to update data used to estimate tidal creek assessment categories using FLDEP IWR run data.  In this example, we use IWR Run 66, but in theory it should work with any IWR run. The only requirements are:
 
 * Install the R package dependencies above 
 * Download/extract the `.accdb` files for a selected run from here: <https://publicfiles.dep.state.fl.us/dear/iwr/>
 * Have access to the source tidal creek line file with creek ID (JEI) assignments created by MW (included in this [repository](https://tbep-tech.github.io/tidalcreek-stats/)).
-* A WBID polygon shapefile for the appropriate run, which can be retrieved through web services (<https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about>.  The Run65 WBID shapefiles are also available from the folder here: <http://publicfiles.dep.state.fl.us/dear/kristin/>. 
+* A WBID polygon shapefile for the appropriate run, which can be retrieved through web services (<https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about>.  The Run65 WBID shapefiles are also available from the folder here: <http://publicfiles.dep.state.fl.us/dear/kristin/> (no need to download if using web services). 
 
 Below we set a path to the extracted location for the IWR database, load the tidal creek line file, and load the wbid polygon file.
 
 ```{r}
 # set database path
-pth <- "~/Desktop/iwr2024_run65_2024-01-30/"
+pth <- "~/Desktop/iwr2024_run66_2024-11-15/"
 
 # # to explore
 # con <- odbcConnectAccess2007('C:/Users/mbeck/Desktop/iwr2021_run61_2021-05-27/iwr_run61_05272021.accdb')
@@ -67,12 +67,12 @@ pth <- "~/Desktop/iwr2024_run65_2024-01-30/"
 # source creek line file
 tdlcrk <- st_read(here('shapes/TidalCreek_ALL_Line.shp'), quiet = T)
 
-# wbid data, run 65 (url should not change betweem runs)
+# wbid data, run 66 (url should not change between runs)
 wbid <- st_read('https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/WBIDS/MapServer/0/query?outFields=*&where=1%3D1&f=geojson', quiet = T) %>% 
   st_transform(crs = st_crs(tdlcrk))
 ```
 
-Now we import the IWR run data for the entire state using an ODBC connection to the extracted folder.  The following code just iterates through the `.accdb` files in the extracted folders, retrieves the data within a ten year window from the current run, and pulls out parameters of interest.  Note that 11 years are subset based on the current year.  This is done to accommodate IWR runs where incomplete data are present for the current year. This is done in a loop using a SQL. It only takes a few minutes to run and does not eat up a lot of memory.
+Now we import the IWR run data for the entire state using an ODBC connection to the extracted folder.  The following code just iterates through the `.accdb` files in the extracted folders, retrieves the data within a ten year window from the current run, and pulls out parameters of interest.  Note that 11 years are subset based on the current year.  This is done to accommodate IWR runs where incomplete data are present for the current year. This is done in a loop using a SQL request. It only takes a few minutes to run and does not use a lot of memory.
 
 ```{r}
 # this retrieves most recent ten years of iwr data, including the current year and ten years prior
@@ -84,7 +84,7 @@ Now we import the IWR run data for the entire state using an ODBC connection to 
 dbs <- list.files(pth, pattern = 'rawDataDB.*\\.accdb$', full.names = T)
 
 # the current year of interest, used to build the query for ten prior years
-curyr <- 2023
+curyr <- 2024
 
 # query building tools
 mcode <- c("CHLAC","COLOR","COND","DO","DOSAT","NO3O2","ORGN","SALIN","TKN","TN","TP","TSS","TURB") %>% 
@@ -145,7 +145,7 @@ stas <- staraw %>%
 head(stas)
 ```
 
-The next step is to create a polyline file that is similar to the source file, but includes an intersection with the WBID layer.  It also includes creek ID (JEI), class, and creek length (total across WBIDs).  It is specific to southwest Florida.  This reproduces the `tidalcreeks` sf data object in tbeptools for the current wBID.
+The next step is to create a polyline file that is similar to the source file, but includes an intersection with the WBID layer.  It also includes creek ID (JEI), class, and creek length (total across WBIDs).  It is specific to southwest Florida.  This reproduces the `tidalcreeks` sf data object in tbeptools for the current wBIDs and must be saved to the `data` folder for the package.
 
 ```{r}
 # create tidalcreeks polyline file with wbid, class, jei info -------------
@@ -162,10 +162,13 @@ tidalcreeks <- st_intersection(tdlcrk, wbid) %>%
 # fix rownames
 row.names(tidalcreeks) <- 1:nrow(tidalcreeks)
 
+# save to Desktop for tbeptools data folder
+save(tidalcreeks, file = '~/Desktop/tidalcreeks.RData', compress = 'xz')
+
 head(tidalcreeks)
 ```
 
-The final step is to extract the IWR station data at the state level to tidal creeks in southwest Florida.  This is done by buffering the original creek line file (200m, flat ends), intersecting the buffered file with the station lat/lon file, and uisng an inner join by station.  Finally, the WBID class is added.  This is reproducing the `iwrraw` file from the tbeptools package.
+The final step is to extract the IWR station data at the state level to tidal creeks in southwest Florida.  This is done by buffering the original creek line file (200m, flat ends), intersecting the buffered file with the station lat/lon file, and using an inner join by station.  Finally, the WBID class is added.  This is reproducing the `iwrraw` file for tbeptools and must be saved in the `data` folder for the package.
 
 ```{r}
 # wbid classes from wbid, to join
@@ -186,6 +189,9 @@ iwrraw <- st_buffer(tdlcrk, dist = 200, endCapStyle = 'FLAT') %>%
   ) %>% 
   left_join(classadd, by = c('wbid'))
 
+# save to Desktop for tbeptools data folder
+save(iwrraw, file = '~/Desktop/iwrraw.RData', compress = 'xz')
+
 head(iwrraw)
 ```
 
@@ -195,10 +201,10 @@ Finally, we want to compare the results from the previous year's run with the ne
 library(tbeptools)
 
 # get new estimates
-tmpnew <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2023)
+tmpnew <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2024)
 
 # get old estimates
-tmpold <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2022)
+tmpold <- anlz_tdlcrk(tidalcreeks, iwrraw, yr = 2023)
 
 # compare
 tmpnewcmp <- tmpnew %>% 
