@@ -9,15 +9,15 @@ output:
 
 This document provides a quick summary of trends in southwest Florida tidal creek scores.  Functions in the [tbeptools](https://tbep-tech.github.io/tbeptools/){target="_blank"} R package are used to create the assessment.
 
-```{r setup, warning = F, message = F, fig.width = 8, fig.height = 4.5, fig.align='center', out.width='100%'}
+```{r setup, warning = F, message = F, out.width='100%'}
+library(plotly)
 library(tidyverse)
-library(patchwork)
 library(tbeptools)
 
 trnds <- tibble(
-    yrs = 1975:2023,
-  ) |> 
-  group_nest(yrs) |> 
+  yrs = 1975:2024,
+) %>% 
+  group_nest(yrs) %>% 
   mutate(
     data = purrr::map(yrs, function(x){
       # cat(x, '\t')
@@ -25,60 +25,91 @@ trnds <- tibble(
     }) 
   )
 
-toplo <- trnds |> 
-  unnest('data') |> 
+toplo1 <- trnds %>% 
+  unnest('data') %>% 
   summarise(
     cnt = n(), 
     .by = c(yrs, score)
-  ) 
-
-toplo1 <- toplo |> 
+  ) %>% 
   mutate(
     score = factor(score, c('Monitor', 'Caution', 'Investigate', 'Prioritize', 'No Data'))
   )
 
-cols <- list(Monitor = '#2DC938', Caution = '#E9C318', Investigate = '#EE7600', Prioritize = '#FF4040', `No Data` = '#ADD8E6')
+cols <- c(
+  Monitor = '#2DC938', 
+  Caution = '#E9C318', 
+  Investigate = '#EE7600', 
+  Prioritize = '#FF4040',
+  `No Data` = '#ADD8E6'
+)
 
-p1 <- ggplot(toplo1, aes(x = yrs, y = cnt, fill = score)) +
-  geom_col() +
-  scale_fill_manual(values = cols) +
-  scale_x_continuous(expand = c(0,0)) +
-  scale_y_continuous(expand = c(0,0)) +
-  theme_minimal() +
-  theme(
-    legend.position = 'top', 
-    axis.text.x = element_blank()
-  ) + 
-  labs(
-    x = NULL,
-    fill = NULL,
-    title = 'Tidal Creek Trends',
-    y = 'Count'
+p1 <- plot_ly(data = toplo1, x = ~yrs, y = ~cnt, color = ~score,
+              type = 'bar', legendgroup = ~score, name = ~score,
+              colors = cols) %>%
+  layout(
+    barmode = 'stack',
+    showlegend = TRUE,
+    xaxis = list(
+      title = '',
+      showgrid = FALSE,
+      zeroline = FALSE
+    ),
+    yaxis = list(
+      title = 'Count',
+      showgrid = TRUE,
+      zeroline = FALSE
+    )
   )
 
-toplo2 <- toplo |> 
-  filter(score != 'No Data') |> 
-  mutate(
-    score = factor(score, c('Monitor', 'Caution', 'Investigate', 'Prioritize'))
+toplo2 <- toplo1 %>% 
+  filter(score != 'No Data') %>% 
+  mutate(, 
+    cnt = 100 * cnt / sum(cnt), 
+    .by = yrs
   )
 
-cols <- list(Monitor = '#2DC938', Caution = '#E9C318', Investigate = '#EE7600', Prioritize = '#FF4040')
-
-p2 <- ggplot(toplo2, aes(x = yrs, y = cnt, fill = score)) +
-  geom_bar(stat = 'identity', position = 'fill', show.legend = F) +
-  scale_fill_manual(values = cols) +
-  scale_x_continuous(expand = c(0,0)) +
-  scale_y_continuous(expand = c(0,0)) +
-  theme_minimal() +
-  labs(
-    x = NULL,
-    fill = NULL,
-    y = 'Proportion with data',
-    caption = 'Source: TBEP, Florida Department of Environmental Protection, Impaired Waters Rule, Run 65'
+p2 <- plot_ly() %>%
+  add_bars(data = toplo2, x = ~yrs, y = ~cnt, color = ~score,
+           legendgroup = ~score, name = ~score,
+           colors = cols, showlegend = FALSE) %>%
+  layout(
+    barmode = 'stack',
+    xaxis = list(
+      title = '',
+      showgrid = FALSE,
+      zeroline = FALSE
+    ),
+    yaxis = list(
+      title = 'Proportion with data',
+      showgrid = TRUE,
+      zeroline = FALSE
+    )
   )
 
-p <- p1 + p2 + plot_layout(ncol = 1, guides = 'collect') & theme(legend.position = 'top')
-
-p
+# Combine plots using subplot
+subplot(p1, p2, nrows = 2, shareX = TRUE, heights = c(0.5, 0.5), titleY = TRUE) %>%  
+  layout(
+    barmode = 'stack',
+    showlegend = TRUE,
+    legend = list(
+      orientation = 'h',
+      xanchor = 'center',
+      x = 0.5,
+      y = 1.01,
+      yanchor = 'bottom'
+    ),
+    margin = list(t = 50),
+    annotations = list(
+      list(
+        x = 1,
+        y = -0.1,
+        text = 'Source: TBEP, Florida Department of Environmental Protection, Impaired Waters Rule, Run 66',
+        showarrow = FALSE,
+        xref = 'paper',
+        yref = 'paper',
+        font = list(size = 10)
+      )
+    )
+  )
 ```
 

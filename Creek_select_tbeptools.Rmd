@@ -51,7 +51,7 @@ This workflow was developed to update data used to estimate tidal creek assessme
 * Install the R package dependencies above 
 * Download/extract the `.accdb` files for a selected run from here: <https://publicfiles.dep.state.fl.us/dear/iwr/>
 * Have access to the source tidal creek line file with creek ID (JEI) assignments created by MW (included in this [repository](https://tbep-tech.github.io/tidalcreek-stats/)).
-* A WBID polygon shapefile for the appropriate run, which can be retrieved through web services (<https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about>.  The Run65 WBID shapefiles are also available from the folder here: <http://publicfiles.dep.state.fl.us/dear/kristin/> (no need to download if using web services). 
+* A WBID polygon shapefile for the appropriate run, which can be retrieved through web services (<https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about>.  The Run66 WBID shapefiles are also available from the folder here: <http://publicfiles.dep.state.fl.us/dear/kristin/> (no need to download if using web services). 
 
 Below we set a path to the extracted location for the IWR database, load the tidal creek line file, and load the wbid polygon file.
 
@@ -127,7 +127,7 @@ head(iwr)
 Now we need to get station lat/lon data for intersection with the tidal creek line layer.  This is for the entire state and is retrieved from an ODBC connection to the extracted folder.
 
 ```{r}
-# from geojson for run65
+# from geojson for run66
 # https://geodata.dep.state.fl.us/datasets/FDEP::impaired-waters-rule-iwr-stations/about
 staraw <- st_read('https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/IMPAIRED_WATERS/MapServer/1/query?outFields=*&where=1%3D1&f=geojson', quiet = T)
 stas <- staraw %>% 

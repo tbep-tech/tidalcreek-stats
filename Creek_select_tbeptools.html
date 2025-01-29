@@ -291,7 +291,7 @@ href="https://tbep-tech.github.io/tidalcreek-stats/">repository</a>).</li>
 retrieved through web services (<a
 href="https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about"
 class="uri">https://geodata.dep.state.fl.us/datasets/FDEP::waterbody-ids-wbids/about</a>.
-The Run65 WBID shapefiles are also available from the folder here: <a
+The Run66 WBID shapefiles are also available from the folder here: <a
 href="http://publicfiles.dep.state.fl.us/dear/kristin/"
 class="uri">http://publicfiles.dep.state.fl.us/dear/kristin/</a> (no
 need to download if using web services).</li>
@@ -381,7 +381,7 @@ for(db in dbs){
 <p>Now we need to get station lat/lon data for intersection with the
 tidal creek line layer. This is for the entire state and is retrieved
 from an ODBC connection to the extracted folder.</p>
-<pre class="r"><code># from geojson for run65
+<pre class="r"><code># from geojson for run66
 # https://geodata.dep.state.fl.us/datasets/FDEP::impaired-waters-rule-iwr-stations/about
 staraw &lt;- st_read(&#39;https://ca.dep.state.fl.us/arcgis/rest/services/OpenData/IMPAIRED_WATERS/MapServer/1/query?outFields=*&amp;where=1%3D1&amp;f=geojson&#39;, quiet = T)
 stas &lt;- staraw %&gt;% 
